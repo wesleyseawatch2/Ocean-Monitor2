@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}數據記錄 - 海洋監測系統{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>所有數據記錄（最新 100 筆）</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>測站</th>
+                <th>時間</th>
+                <th>溫度</th>
+                <th>電導率</th>
+                <th>壓力</th>
+                <th>溶氧</th>
+                <th>酸鹼值</th>
+                <th>鹽度</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reading in readings %}
+            <tr>
+                <td><a href="{% url 'station_data:station_detail' reading.station.id %}">{{ reading.station.station_name }}</a></td>
+                <td>{{ reading.timestamp }}</td>
+                <td>{{ reading.temperature|default:"--" }}</td>
+                <td>{{ reading.conductivity|default:"--" }}</td>
+                <td>{{ reading.pressure|default:"--" }}</td>
+                <td>{{ reading.oxygen|default:"--" }}</td>
+                <td>{{ reading.ph|default:"--" }}</td>
+                <td>{{ reading.salinity|default:"--" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" style="text-align:center; color:#999;">尚無數據記錄</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

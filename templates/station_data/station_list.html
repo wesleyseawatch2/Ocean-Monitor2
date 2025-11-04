@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}測站列表 - 海洋監測系統{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>測站列表</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>測站名稱</th>
+                <th>設備型號</th>
+                <th>裝設地點</th>
+                <th>裝設日期</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for station in stations %}
+            <tr>
+                <td>{{ station.station_name }}</td>
+                <td>{{ station.device_model }}</td>
+                <td>{{ station.location }}</td>
+                <td>{{ station.install_date }}</td>
+                <td><a href="{% url 'station_data:station_detail' station.id %}">查看詳情</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center; color:#999;">尚無測站資料</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
