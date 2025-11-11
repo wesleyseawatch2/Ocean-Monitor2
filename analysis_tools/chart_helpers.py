@@ -1,4 +1,4 @@
-"""圖表數據轉換工具"""
+"""ocean_monitor\analysis_tools\chart_helpers.py 圖表數據轉換工具"""
 
 def prepare_chart_data(readings):
     """準備圖表數據"""

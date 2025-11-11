@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}登出 - 海洋監測系統{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h2>👋 確認登出</h2>
+            <p>您確定要登出嗎？</p>
+        </div>
+
+        <form method="POST" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+            {% endif %}
+
+            <button type="submit" class="btn">確認登出</button>
+        </form>
+
+        <div class="form-footer">
+            <p><a href="/">返回首頁</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

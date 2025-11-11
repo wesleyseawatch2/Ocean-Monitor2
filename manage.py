@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#ocean_monitor\manage.py !/usr/bin/env python
 import os
 import sys
 
