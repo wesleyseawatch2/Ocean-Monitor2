@@ -5,3 +5,19 @@ python-decouple==3.8
 sqlparse==0.5.3
 typing_extensions==4.15.0
 tzdata==2025.2
+
+# Django Allauth
+django-allauth==65.3.0
+
+# ASGI/WSGI servers for deployment
+daphne==4.1.2
+gunicorn==23.0.0
+
+# JWT support for Google OAuth
+PyJWT==2.10.1
+
+# Static files serving
+whitenoise==6.8.2
+
+# Database (PostgreSQL for production)
+psycopg2-binary==2.9.10
