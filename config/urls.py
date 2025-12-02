@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
     # 首頁直接導向通用登入頁面
     path('', RedirectView.as_view(url='/login/', permanent=False)),
 
