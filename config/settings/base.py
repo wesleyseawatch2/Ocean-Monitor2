@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -24,12 +25,14 @@ INSTALLED_APPS = [
     'analysis_tools',
     'apps.core',
     'apps.core.accounts',
+    'admin_panel',  # 自訂後台
 
-    # allauth 相關
+    # Third-party
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',  # Google 登入
+    'django_celery_beat',  # Celery Beat 動態排程
 ]
 
 MIDDLEWARE = [
@@ -116,12 +119,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # django-allauth 設定
+ACCOUNT_ADAPTER = 'apps.core.adapters.CustomAccountAdapter'  # 使用自訂適配器
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # 允許使用 username 或 email 登入
 ACCOUNT_EMAIL_REQUIRED = True  # 註冊時必須填寫 email
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # email 驗證為選填 (可改為 'mandatory' 強制驗證)
 ACCOUNT_USERNAME_REQUIRED = False  # 社交登入不需要 username，使用 email 即可
-LOGIN_REDIRECT_URL = '/'  # 登入後導向首頁
-LOGOUT_REDIRECT_URL = '/'  # 登出後導向首頁
+LOGIN_REDIRECT_URL = '/login/'  # 預設登入後導向 (會被 adapter 覆寫)
+LOGOUT_REDIRECT_URL = '/login/'  # 登出後導向登入頁
 
 # 社交登入設定
 SOCIALACCOUNT_AUTO_SIGNUP = True  # 使用社交登入時自動建立帳號
@@ -142,4 +146,85 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'FETCH_USERINFO': True,  # 從 Google 取得用戶資訊
     }
+}
+
+# ==========================================
+# Redis 連線設定
+# ==========================================
+REDIS_URI = os.getenv('REDIS_URI', 'redis://127.0.0.1:6379/1')
+
+# ==========================================
+# Celery 設定 - 使用 Redis 作為 Broker
+# ==========================================
+# Broker：任務佇列存放的地方（使用 Redis）
+CELERY_BROKER_URL = REDIS_URI
+
+# Result Backend：任務結果存放的地方（可選，這裡也用 Redis）
+CELERY_RESULT_BACKEND = REDIS_URI
+
+# 時區設定（與 Django 一致）
+CELERY_TIMEZONE = TIME_ZONE
+
+# 接受的內容類型
+CELERY_ACCEPT_CONTENT = ['json']
+
+# 任務序列化格式
+CELERY_TASK_SERIALIZER = 'json'
+
+# 結果序列化格式
+CELERY_RESULT_SERIALIZER = 'json'
+
+# 啟動時重試連線（消除 Celery 6.0 棄用警告）
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# ==========================================
+# Cache 設定 - 使用 Redis
+# ==========================================
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URI,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'library',  # 所有 key 都會加上這個前綴
+        'TIMEOUT': 300,  # 預設快取時間 5 分鐘（單位：秒）
+    }
+}
+
+# ==========================================
+# Celery Beat 定時任務設定 - 使用 django-celery-beat
+# ==========================================
+
+# 使用 django-celery-beat 的資料庫排程器
+# 這樣可以透過 Django Admin 或程式碼動態管理排程，不需要重啟服務
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# 預設的靜態排程（可選）
+# 如果需要固定的全域排程，可以保留這個設定
+# django-celery-beat 會同時執行資料庫排程和靜態排程
+CELERY_BEAT_SCHEDULE = {
+    # 每小時更新海洋數據（全域任務）
+    'hourly-ocean-data-update': {
+        'task': 'station_data.tasks.update_ocean_data_from_source',
+        'schedule': crontab(minute=0),  # 每小時的第 0 分鐘執行
+    },
+
+    # 每 6 小時檢查數據異常（全域任務）
+    'check-ocean-alerts': {
+        'task': 'station_data.tasks.check_ocean_data_alerts',
+        'schedule': crontab(minute=0, hour='*/6'),  # 每 6 小時執行
+    },
+
+    # 每天早上 8 點產生統計報告（全域任務）
+    'daily-statistics': {
+        'task': 'station_data.tasks.generate_daily_statistics',
+        'schedule': crontab(hour=8, minute=0),  # 每天早上 8 點
+    },
+
+    # 測試用：每 2 分鐘執行一次（開發測試用，正式環境請移除或註解）
+    'test-update-every-2-minutes': {
+        'task': 'station_data.tasks.update_ocean_data_from_source',
+        'schedule': 120.0,  # 每 120 秒（2 分鐘）
+    },
 }

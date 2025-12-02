@@ -1,0 +1,27 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}刪除測站{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 2rem; color: #e74c3c;">⚠️ 確認刪除測站</h2>
+
+<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1.5rem; border-radius: 6px; margin-bottom: 2rem;">
+    <p style="color: #856404; margin-bottom: 0.5rem;">您確定要刪除以下測站嗎？</p>
+    <p style="color: #856404; font-size: 0.9rem;">此操作將無法復原，所有相關的數據記錄也會被刪除。</p>
+</div>
+
+<div style="background: #f8f9fa; padding: 1.5rem; border-radius: 6px; margin-bottom: 2rem;">
+    <p style="margin-bottom: 0.5rem;"><strong>測站名稱：</strong>{{ station.station_name }}</p>
+    <p style="margin-bottom: 0.5rem;"><strong>設備型號：</strong>{{ station.device_model }}</p>
+    <p style="margin-bottom: 0.5rem;"><strong>位置：</strong>{{ station.location }}</p>
+    <p style="margin-bottom: 0;"><strong>安裝日期：</strong>{{ station.install_date }}</p>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-danger">確認刪除</button>
+        <a href="{% url 'admin_panel:station_list' %}" class="btn" style="background: #6c757d;">取消</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}儀表板{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 2rem;">系統概覽</h2>
+
+<!-- 統計卡片 -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px;">
+        <h3 style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_stations }}</h3>
+        <p style="opacity: 0.9;">總測站數</p>
+    </div>
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 2rem; border-radius: 8px;">
+        <h3 style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_readings }}</h3>
+        <p style="opacity: 0.9;">總數據筆數</p>
+    </div>
+    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 2rem; border-radius: 8px;">
+        <h3 style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ recent_readings }}</h3>
+        <p style="opacity: 0.9;">近7天數據</p>
+    </div>
+    <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 2rem; border-radius: 8px;">
+        <h3 style="font-size: 2.5rem; margin-bottom: 0.5rem;">{{ total_users }}</h3>
+        <p style="opacity: 0.9;">總使用者數</p>
+    </div>
+</div>
+
+<!-- 測站統計 -->
+<div style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; color: #2c3e50;">測站數據統計（前5名）</h3>
+    <table style="width: 100%; border-collapse: collapse; background: white;">
+        <thead>
+            <tr style="background: #f8f9fa;">
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">測站名稱</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">位置</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">數據筆數</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for station in station_stats %}
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 1rem;">{{ station.station_name }}</td>
+                <td style="padding: 1rem;">{{ station.location }}</td>
+                <td style="padding: 1rem;">{{ station.reading_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 最新數據 -->
+<div>
+    <h3 style="margin-bottom: 1rem; color: #2c3e50;">最新數據記錄（前10筆）</h3>
+    <table style="width: 100%; border-collapse: collapse; background: white;">
+        <thead>
+            <tr style="background: #f8f9fa;">
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">測站</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">時間</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">溫度</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">鹽度</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">pH值</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reading in latest_readings %}
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 1rem;">{{ reading.station.station_name }}</td>
+                <td style="padding: 1rem;">{{ reading.timestamp|date:"Y-m-d H:i" }}</td>
+                <td style="padding: 1rem;">{{ reading.temperature|floatformat:2 }}°C</td>
+                <td style="padding: 1rem;">{{ reading.salinity|floatformat:2 }} PSU</td>
+                <td style="padding: 1rem;">{{ reading.ph_value|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}管理後台{% endblock %} - 海洋監測系統</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+
+        /* 側邊欄 */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 1rem;
+        }
+
+        .sidebar nav a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar nav a:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #3498db;
+        }
+
+        .sidebar nav a.active {
+            background: rgba(52, 152, 219, 0.3);
+            border-left-color: #3498db;
+        }
+
+        /* 主要內容區 */
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
+            padding: 2rem;
+            width: calc(100% - 250px);
+        }
+
+        /* 頂部導航 */
+        .top-nav {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-nav h2 {
+            color: #2c3e50;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        /* 內容卡片 */
+        .content-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 訊息提示 */
+        .messages {
+            margin-bottom: 1.5rem;
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <!-- 側邊欄 -->
+    <aside class="sidebar">
+        <h1>🌊 管理後台</h1>
+        <nav>
+            <a href="{% url 'admin_panel:dashboard' %}">📊 儀表板</a>
+            <a href="{% url 'admin_panel:station_list' %}">📍 測站管理</a>
+            <a href="{% url 'admin_panel:reading_list' %}">📈 數據記錄</a>
+            <a href="{% url 'admin_panel:user_list' %}">👥 使用者管理</a>
+            <a href="{% url 'admin_panel:periodic_task_list' %}">⏰ 定時任務</a>
+            <a href="{% url 'admin_panel:logout' %}" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">🚪 登出</a>
+        </nav>
+    </aside>
+
+    <!-- 主要內容 -->
+    <main class="main-content">
+        <!-- 頂部導航 -->
+        <div class="top-nav">
+            <h2>{% block page_title %}管理後台{% endblock %}</h2>
+            <div class="user-info">
+                <span>歡迎, {{ user.username }}</span>
+            </div>
+        </div>
+
+        <!-- 訊息提示 -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- 頁面內容 -->
+        <div class="content-card">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

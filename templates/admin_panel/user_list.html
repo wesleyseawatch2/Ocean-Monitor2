@@ -1,0 +1,50 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}使用者管理{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 2rem;">使用者列表</h2>
+
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="background: #f8f9fa;">
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">ID</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">使用者名稱</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Email</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">管理員</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">啟用</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">註冊時間</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">最後登入</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr style="border-bottom: 1px solid #dee2e6;">
+            <td style="padding: 1rem;">{{ user.id }}</td>
+            <td style="padding: 1rem;">{{ user.username }}</td>
+            <td style="padding: 1rem;">{{ user.email|default:"-" }}</td>
+            <td style="padding: 1rem;">
+                {% if user.is_staff %}
+                    <span style="color: #28a745;">✓ 是</span>
+                {% else %}
+                    <span style="color: #999;">✗ 否</span>
+                {% endif %}
+            </td>
+            <td style="padding: 1rem;">
+                {% if user.is_active %}
+                    <span style="color: #28a745;">✓ 啟用</span>
+                {% else %}
+                    <span style="color: #dc3545;">✗ 停用</span>
+                {% endif %}
+            </td>
+            <td style="padding: 1rem;">{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+            <td style="padding: 1rem;">{{ user.last_login|date:"Y-m-d H:i"|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" style="padding: 2rem; text-align: center; color: #999;">暫無使用者資料</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

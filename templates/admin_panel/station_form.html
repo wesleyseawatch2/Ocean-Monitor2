@@ -1,0 +1,40 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}{{ action }}測站{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 2rem;">{{ action }}測站</h2>
+
+<form method="POST" style="max-width: 600px;">
+    {% csrf_token %}
+
+    <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #2c3e50; font-weight: 500;">測站名稱</label>
+        <input type="text" name="station_name" value="{{ station.station_name|default:'' }}" required
+               style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8ed; border-radius: 6px; font-size: 1rem;">
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #2c3e50; font-weight: 500;">設備型號</label>
+        <input type="text" name="device_model" value="{{ station.device_model|default:'' }}" required
+               style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8ed; border-radius: 6px; font-size: 1rem;">
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #2c3e50; font-weight: 500;">位置</label>
+        <input type="text" name="location" value="{{ station.location|default:'' }}" required
+               style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8ed; border-radius: 6px; font-size: 1rem;">
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #2c3e50; font-weight: 500;">安裝日期</label>
+        <input type="date" name="install_date" value="{{ station.install_date|date:'Y-m-d'|default:'' }}" required
+               style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8ed; border-radius: 6px; font-size: 1rem;">
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn">儲存</button>
+        <a href="{% url 'admin_panel:station_list' %}" class="btn" style="background: #6c757d;">取消</a>
+    </div>
+</form>
+{% endblock %}

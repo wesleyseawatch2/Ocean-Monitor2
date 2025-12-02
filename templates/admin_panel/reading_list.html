@@ -1,0 +1,40 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}數據記錄{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 2rem;">數據記錄列表</h2>
+
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="background: #f8f9fa;">
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">ID</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">測站</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">時間</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">溫度 (°C)</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">鹽度 (PSU)</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">pH值</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">溶氧 (mg/L)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reading in readings %}
+        <tr style="border-bottom: 1px solid #dee2e6;">
+            <td style="padding: 1rem;">{{ reading.id }}</td>
+            <td style="padding: 1rem;">{{ reading.station.station_name }}</td>
+            <td style="padding: 1rem;">{{ reading.timestamp|date:"Y-m-d H:i:s" }}</td>
+            <td style="padding: 1rem;">{{ reading.temperature|floatformat:2 }}</td>
+            <td style="padding: 1rem;">{{ reading.salinity|floatformat:2 }}</td>
+            <td style="padding: 1rem;">{{ reading.ph_value|floatformat:2 }}</td>
+            <td style="padding: 1rem;">{{ reading.dissolved_oxygen|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" style="padding: 2rem; text-align: center; color: #999;">暫無數據記錄</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">顯示最近 100 筆數據</p>
+{% endblock %}

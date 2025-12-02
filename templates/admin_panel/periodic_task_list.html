@@ -1,0 +1,232 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}定時任務管理{% endblock %}
+{% block page_title %}定時任務管理{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .stat-card h3 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card p {
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+
+    .stat-card.success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .stat-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    table th {
+        background: #f8f9fa;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    table td {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-badge.enabled {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.disabled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .schedule-info {
+        font-family: 'Courier New', monospace;
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-small {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #a8a8a8 0%, #7f7f7f 100%);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .empty-state svg {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats">
+    <div class="stat-card">
+        <h3>{{ total_tasks }}</h3>
+        <p>總任務數</p>
+    </div>
+    <div class="stat-card success">
+        <h3>{{ enabled_tasks }}</h3>
+        <p>已啟用任務</p>
+    </div>
+    <div class="stat-card warning">
+        <h3>{{ disabled_tasks }}</h3>
+        <p>已停用任務</p>
+    </div>
+</div>
+
+<div class="action-bar">
+    <h3 style="margin: 0;">定時任務列表</h3>
+    <a href="{% url 'admin_panel:periodic_task_create' %}" class="btn">+ 新增任務</a>
+</div>
+
+{% if tasks %}
+<table>
+    <thead>
+        <tr>
+            <th>任務名稱</th>
+            <th>任務類型</th>
+            <th>排程</th>
+            <th>狀態</th>
+            <th>最後執行</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td><strong>{{ task.name }}</strong></td>
+            <td>
+                {% if 'update_ocean_data' in task.task %}
+                    更新海洋數據
+                {% elif 'check_ocean_data_alerts' in task.task %}
+                    檢查數據異常
+                {% elif 'generate_daily_statistics' in task.task %}
+                    產生每日統計
+                {% elif 'send_data_alert_notification' in task.task %}
+                    發送異常通知
+                {% else %}
+                    {{ task.task }}
+                {% endif %}
+            </td>
+            <td>
+                {% if task.interval %}
+                    <span class="schedule-info">每 {{ task.interval.every }} {{ task.interval.period }}</span>
+                {% elif task.crontab %}
+                    <span class="schedule-info">{{ task.crontab.minute }} {{ task.crontab.hour }} * * {{ task.crontab.day_of_week }}</span>
+                {% elif task.clocked %}
+                    <span class="schedule-info">{{ task.clocked.clocked_time|date:"Y-m-d H:i" }}</span>
+                {% else %}
+                    <span class="schedule-info">未設定</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if task.enabled %}
+                    <span class="status-badge enabled">啟用</span>
+                {% else %}
+                    <span class="status-badge disabled">停用</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if task.last_run_at %}
+                    {{ task.last_run_at|date:"Y-m-d H:i:s" }}
+                {% else %}
+                    <span style="color: #999;">尚未執行</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <a href="{% url 'admin_panel:periodic_task_toggle' task.pk %}" class="btn btn-small btn-success">
+                        {% if task.enabled %}停用{% else %}啟用{% endif %}
+                    </a>
+                    <a href="{% url 'admin_panel:periodic_task_edit' task.pk %}" class="btn btn-small btn-secondary">編輯</a>
+                    <a href="{% url 'admin_panel:periodic_task_delete' task.pk %}" class="btn btn-small btn-danger">刪除</a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <h3>尚無定時任務</h3>
+    <p>點擊「新增任務」建立您的第一個定時任務</p>
+</div>
+{% endif %}
+{% endblock %}

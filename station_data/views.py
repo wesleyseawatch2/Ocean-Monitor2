@@ -15,16 +15,16 @@ def station_list(request):
 def station_detail(request, station_id):
     station = get_object_or_404(Station, pk=station_id)
     readings = station.readings.all()[:50]
-    
+
     stats = {
         'temperature': calculate_statistics(readings, 'temperature'),
         'ph': calculate_statistics(readings, 'ph'),
         'oxygen': calculate_statistics(readings, 'oxygen'),
         'salinity': calculate_statistics(readings, 'salinity'),
     }
-    
+
     chart_data = prepare_chart_data(readings)
-    
+
     context = {
         'station': station,
         'readings': readings,

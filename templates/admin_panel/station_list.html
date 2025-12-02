@@ -1,0 +1,44 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block page_title %}測站管理{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>測站列表</h2>
+    <a href="{% url 'admin_panel:station_create' %}" class="btn">➕ 新增測站</a>
+</div>
+
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="background: #f8f9fa;">
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">ID</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">測站名稱</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">設備型號</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">位置</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">安裝日期</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">數據筆數</th>
+            <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for station in stations %}
+        <tr style="border-bottom: 1px solid #dee2e6;">
+            <td style="padding: 1rem;">{{ station.id }}</td>
+            <td style="padding: 1rem;">{{ station.station_name }}</td>
+            <td style="padding: 1rem;">{{ station.device_model }}</td>
+            <td style="padding: 1rem;">{{ station.location }}</td>
+            <td style="padding: 1rem;">{{ station.install_date }}</td>
+            <td style="padding: 1rem;">{{ station.reading_count }}</td>
+            <td style="padding: 1rem;">
+                <a href="{% url 'admin_panel:station_edit' station.id %}" style="color: #3498db; text-decoration: none; margin-right: 1rem;">編輯</a>
+                <a href="{% url 'admin_panel:station_delete' station.id %}" style="color: #e74c3c; text-decoration: none;">刪除</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" style="padding: 2rem; text-align: center; color: #999;">暫無測站資料</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

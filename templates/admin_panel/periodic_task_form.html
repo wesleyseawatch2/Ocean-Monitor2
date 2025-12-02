@@ -1,0 +1,268 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ action }}定時任務{% endblock %}
+{% block page_title %}{{ action }}定時任務{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-group input[type="text"],
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group .help-text {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .schedule-options {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        display: none;
+    }
+
+    .schedule-options.active {
+        display: block;
+    }
+
+    .schedule-options h4 {
+        margin-bottom: 1rem;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .radio-group label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: normal;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+    }
+
+    .task-preview {
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-radius: 4px;
+    }
+
+    .task-preview h4 {
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+
+    .task-preview code {
+        background: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+
+    <div class="form-group">
+        <label for="name">任務名稱 *</label>
+        <input type="text" id="name" name="name" value="{{ task.name|default:'' }}" required>
+        <p class="help-text">為這個定時任務取一個容易識別的名稱</p>
+    </div>
+
+    <div class="form-group">
+        <label for="task">任務類型 *</label>
+        <select id="task" name="task" required>
+            <option value="">請選擇任務類型</option>
+            {% for task_path, task_name in available_tasks %}
+            <option value="{{ task_path }}" {% if task.task == task_path %}selected{% endif %}>
+                {{ task_name }}
+            </option>
+            {% endfor %}
+        </select>
+        <p class="help-text">選擇要執行的任務</p>
+    </div>
+
+    <div class="form-group">
+        <label>排程類型 *</label>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="schedule_type" value="interval"
+                    {% if current_schedule_type == 'interval' or not current_schedule_type %}checked{% endif %}
+                    onchange="toggleScheduleOptions('interval')">
+                時間間隔
+            </label>
+            <label>
+                <input type="radio" name="schedule_type" value="crontab"
+                    {% if current_schedule_type == 'crontab' %}checked{% endif %}
+                    onchange="toggleScheduleOptions('crontab')">
+                Cron 表達式
+            </label>
+        </div>
+    </div>
+
+    <!-- 時間間隔選項 -->
+    <div id="interval-options" class="schedule-options {% if current_schedule_type == 'interval' or not current_schedule_type %}active{% endif %}">
+        <h4>時間間隔設定</h4>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="interval_every">間隔數量</label>
+                <input type="number" id="interval_every" name="interval_every"
+                    value="{{ task.interval.every|default:'5' }}" min="1">
+            </div>
+            <div class="form-group">
+                <label for="interval_period">單位</label>
+                <select id="interval_period" name="interval_period">
+                    <option value="seconds" {% if task.interval.period == 'seconds' %}selected{% endif %}>秒</option>
+                    <option value="minutes" {% if task.interval.period == 'minutes' or not task.interval %}selected{% endif %}>分鐘</option>
+                    <option value="hours" {% if task.interval.period == 'hours' %}selected{% endif %}>小時</option>
+                    <option value="days" {% if task.interval.period == 'days' %}selected{% endif %}>天</option>
+                </select>
+            </div>
+        </div>
+        <p class="help-text">範例：每 5 分鐘、每 1 小時、每 30 秒</p>
+    </div>
+
+    <!-- Crontab 選項 -->
+    <div id="crontab-options" class="schedule-options {% if current_schedule_type == 'crontab' %}active{% endif %}">
+        <h4>Cron 表達式設定</h4>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="crontab_minute">分鐘 (0-59)</label>
+                <input type="text" id="crontab_minute" name="crontab_minute"
+                    value="{{ task.crontab.minute|default:'0' }}" placeholder="*">
+            </div>
+            <div class="form-group">
+                <label for="crontab_hour">小時 (0-23)</label>
+                <input type="text" id="crontab_hour" name="crontab_hour"
+                    value="{{ task.crontab.hour|default:'*' }}" placeholder="*">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="crontab_day_of_week">星期 (0-6)</label>
+                <input type="text" id="crontab_day_of_week" name="crontab_day_of_week"
+                    value="{{ task.crontab.day_of_week|default:'*' }}" placeholder="*">
+            </div>
+            <div class="form-group">
+                <label for="crontab_day_of_month">日期 (1-31)</label>
+                <input type="text" id="crontab_day_of_month" name="crontab_day_of_month"
+                    value="{{ task.crontab.day_of_month|default:'*' }}" placeholder="*">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="crontab_month_of_year">月份 (1-12)</label>
+            <input type="text" id="crontab_month_of_year" name="crontab_month_of_year"
+                value="{{ task.crontab.month_of_year|default:'*' }}" placeholder="*">
+        </div>
+        <div class="task-preview">
+            <h4>常用 Cron 範例：</h4>
+            <ul style="margin-left: 1.5rem; line-height: 1.8;">
+                <li><code>0 * * * *</code> - 每小時整點執行</li>
+                <li><code>0 8 * * *</code> - 每天早上 8 點執行</li>
+                <li><code>0 0 * * 0</code> - 每週日午夜執行</li>
+                <li><code>*/15 * * * *</code> - 每 15 分鐘執行</li>
+                <li><code>0 2 1 * *</code> - 每月 1 號凌晨 2 點執行</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="kwargs">任務參數 (JSON 格式，選填)</label>
+        <textarea id="kwargs" name="kwargs" rows="3" placeholder='{"user_id": 123}'>{{ task.kwargs|default:'{}' }}</textarea>
+        <p class="help-text">如需傳遞參數給任務，請使用 JSON 格式。例如：{"user_id": 5}</p>
+    </div>
+
+    <div class="form-group">
+        <div class="checkbox-group">
+            <input type="checkbox" id="enabled" name="enabled" {% if task.enabled or action == '新增' %}checked{% endif %}>
+            <label for="enabled">啟用此任務</label>
+        </div>
+        <p class="help-text">取消勾選可暫時停用此任務而不刪除</p>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn">儲存</button>
+        <a href="{% url 'admin_panel:periodic_task_list' %}" class="btn btn-cancel">取消</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleScheduleOptions(type) {
+    const intervalOptions = document.getElementById('interval-options');
+    const crontabOptions = document.getElementById('crontab-options');
+
+    if (type === 'interval') {
+        intervalOptions.classList.add('active');
+        crontabOptions.classList.remove('active');
+    } else if (type === 'crontab') {
+        intervalOptions.classList.remove('active');
+        crontabOptions.classList.add('active');
+    }
+}
+</script>
+{% endblock %}
