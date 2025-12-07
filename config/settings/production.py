@@ -34,10 +34,14 @@ else:
         }
     }
 
-# 生產環境安全設定
-SECURE_SSL_REDIRECT = True  # 強制使用 HTTPS
-SESSION_COOKIE_SECURE = True  # Cookie 只能透過 HTTPS 傳輸
-CSRF_COOKIE_SECURE = True  # CSRF Cookie 只能透過 HTTPS 傳輸
+# 靜態檔案設定 - 使用 WhiteNoise
+STATIC_ROOT = '/app/staticfiles'  # Zeabur 容器中的絕對路徑
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# 生產環境安全設定 (在 Zeabur 上先關閉 HTTPS 重定向,測試靜態檔案)
+SECURE_SSL_REDIRECT = False  # 暫時關閉,確認靜態檔案正常後再開啟
+SESSION_COOKIE_SECURE = False  # 暫時關閉
+CSRF_COOKIE_SECURE = False  # 暫時關閉
 
 # 信任 Zeabur 的代理伺服器
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

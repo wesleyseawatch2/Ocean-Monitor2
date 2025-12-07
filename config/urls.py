@@ -9,11 +9,11 @@ urlpatterns = [
     # 通用登入 (core app)
     path('', include('apps.core.urls')),
 
+    # Django Admin (用於管理 Celery Beat 定時任務)
+    path('admin/', admin.site.urls),
+
     # 自訂後台
     path('panel/', include('admin_panel.urls')),
-
-    # Django Admin (用於管理 Celery Beat 定時任務)
-    path('panel/system-admin/', admin.site.urls),
 
     # 其他功能
     path('accounts/', include('allauth.urls')),  # allauth 的所有 URLs (Google登入)
