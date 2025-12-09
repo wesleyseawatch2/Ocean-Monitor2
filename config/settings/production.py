@@ -46,4 +46,4 @@ CSRF_COOKIE_SECURE = False  # 暫時關閉
 # 信任 Zeabur 的代理伺服器
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-CSRF_TRUSTED_ORUGINS="https://ocean-monitor2.zeabur.app/"
+CSRF_TRUSTED_ORUGINS=["https://ocean-monitor2.zeabur.app/"]
