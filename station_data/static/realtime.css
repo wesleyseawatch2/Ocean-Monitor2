@@ -1,0 +1,191 @@
+/**
+ * 實時更新數據的視覺反饋樣式
+ */
+
+/* 數據更新時的高亮效果 */
+.data-updated {
+    animation: pulse-highlight 0.6s ease-out;
+}
+
+/* 統計數據更新時的效果 */
+.stat-updated {
+    animation: stat-highlight 0.6s ease-out;
+}
+
+/* 總數計數更新時的效果 */
+.count-updated {
+    animation: count-highlight 0.6s ease-out;
+}
+
+/* 脈衝高亮動畫 - 用於數據值更新 */
+@keyframes pulse-highlight {
+    0% {
+        background-color: #fff3cd;
+        transform: scale(1.05);
+    }
+    50% {
+        background-color: #ffe9a3;
+    }
+    100% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+}
+
+/* 統計數據高亮動畫 */
+@keyframes stat-highlight {
+    0% {
+        background-color: #c8e6c9;
+        transform: scale(1.03);
+    }
+    50% {
+        background-color: #a5d6a7;
+    }
+    100% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+}
+
+/* 計數高亮動畫 */
+@keyframes count-highlight {
+    0% {
+        background-color: #bbdefb;
+        font-weight: bold;
+    }
+    100% {
+        background-color: transparent;
+        font-weight: normal;
+    }
+}
+
+/* 實時狀態指示器樣式 */
+#realtime-status {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    transition: all 0.3s ease;
+}
+
+#realtime-status:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#status-indicator {
+    animation: status-pulse 2s infinite;
+}
+
+/* 連接中的脈衝動畫 */
+@keyframes status-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* 數據容器樣式 */
+.realtime-data-container {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #fafafa;
+    margin: 20px 0;
+}
+
+.data-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.data-item {
+    background-color: white;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #2196F3;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-item label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-item .value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 不同類型數據的左邊框顏色 */
+.data-item.temperature { border-left-color: #FF5722; }
+.data-item.ph { border-left-color: #9C27B0; }
+.data-item.oxygen { border-left-color: #4CAF50; }
+.data-item.salinity { border-left-color: #00BCD4; }
+.data-item.conductivity { border-left-color: #FF9800; }
+.data-item.pressure { border-left-color: #607D8B; }
+.data-item.fluorescence { border-left-color: #FFC107; }
+.data-item.turbidity { border-left-color: #795548; }
+
+/* 統計數據卡片 */
+.stats-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 15px 0;
+}
+
+.stats-card h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #2196F3;
+    padding-bottom: 10px;
+}
+
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-value {
+    text-align: center;
+}
+
+.stat-value .label {
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.stat-value .value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2196F3;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .data-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-row {
+        grid-template-columns: 1fr;
+    }
+    
+    #realtime-status {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 15px;
+    }
+}

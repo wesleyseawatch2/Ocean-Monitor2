@@ -1,49 +1,141 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ station.station_name }} - 海洋監測系統{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'realtime.css' %}">
+
 <div class="card">
-    <h2>{{ station.station_name }}</h2>
+    <h2>🌊 {{ station.station_name }}</h2>
     <p><strong>設備型號：</strong>{{ station.device_model }}</p>
     <p><strong>裝設地點：</strong>{{ station.location }}</p>
     <p><strong>裝設日期：</strong>{{ station.install_date }}</p>
-    <p><strong>數據筆數：</strong>{{ total_count }} 筆</p>
+    <p><strong>數據筆數：</strong><span id="total-reading-count">{{ total_count }}</span> 筆</p>
 </div>
 
-<div class="card">
-    <h2>數據統計</h2>
-    <div class="stats">
-        <div class="stat-box">
-            <h3>{{ stats.temperature.avg|default:"--" }}</h3>
-            <p>平均溫度 (°C)</p>
-            <small>Min: {{ stats.temperature.min|default:"--" }} | Max: {{ stats.temperature.max|default:"--" }}</small>
+<!-- 實時數據容器 - JavaScript 會在此插入狀態指示器 -->
+<div id="realtime-container" data-station-id="{{ station.id }}"></div>
+
+<!-- 最新數據讀取 -->
+<div class="card realtime-data-container">
+    <h2>📡 最新數據讀取</h2>
+    <div class="data-row">
+        <div class="data-item temperature">
+            <label>溫度</label>
+            <span class="value" id="latest-temperature">{{ readings.0.temperature|default:"--" }} °C</span>
         </div>
-        <div class="stat-box">
-            <h3>{{ stats.ph.avg|default:"--" }}</h3>
-            <p>平均酸鹼值</p>
-            <small>Min: {{ stats.ph.min|default:"--" }} | Max: {{ stats.ph.max|default:"--" }}</small>
+        <div class="data-item ph">
+            <label>酸鹼值</label>
+            <span class="value" id="latest-ph">{{ readings.0.ph|default:"--" }}</span>
         </div>
-        <div class="stat-box">
-            <h3>{{ stats.oxygen.avg|default:"--" }}</h3>
-            <p>平均溶氧 (mg/L)</p>
-            <small>Min: {{ stats.oxygen.min|default:"--" }} | Max: {{ stats.oxygen.max|default:"--" }}</small>
+        <div class="data-item oxygen">
+            <label>溶氧</label>
+            <span class="value" id="latest-oxygen">{{ readings.0.oxygen|default:"--" }} mg/L</span>
         </div>
-        <div class="stat-box">
-            <h3>{{ stats.salinity.avg|default:"--" }}</h3>
-            <p>平均鹽度 (PSU)</p>
-            <small>Min: {{ stats.salinity.min|default:"--" }} | Max: {{ stats.salinity.max|default:"--" }}</small>
+        <div class="data-item salinity">
+            <label>鹽度</label>
+            <span class="value" id="latest-salinity">{{ readings.0.salinity|default:"--" }} psu</span>
+        </div>
+        <div class="data-item conductivity">
+            <label>電導率</label>
+            <span class="value" id="latest-conductivity">{{ readings.0.conductivity|default:"--" }} µS/cm</span>
+        </div>
+        <div class="data-item pressure">
+            <label>壓力</label>
+            <span class="value" id="latest-pressure">{{ readings.0.pressure|default:"--" }} bar</span>
+        </div>
+        <div class="data-item fluorescence">
+            <label>螢光值</label>
+            <span class="value" id="latest-fluorescence">{{ readings.0.fluorescence|default:"--" }}</span>
+        </div>
+        <div class="data-item turbidity">
+            <label>濁度</label>
+            <span class="value" id="latest-turbidity">{{ readings.0.turbidity|default:"--" }}</span>
+        </div>
+    </div>
+    <p style="text-align:center; color:#999; font-size:12px; margin-top:15px;">
+        最後更新: <span id="latest-timestamp">{{ readings.0.timestamp|date:"Y-m-d H:i:s"|default:"--" }}</span>
+    </p>
+</div>
+
+<!-- 數據統計卡片 -->
+<div class="card stats-card">
+    <h2>📊 數據統計</h2>
+    <h3>溫度 (°C)</h3>
+    <div class="stat-row">
+        <div class="stat-value">
+            <div class="label">最小值</div>
+            <div class="value" id="stat-temperature-min">{{ stats.temperature.min|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">平均值</div>
+            <div class="value" id="stat-temperature-avg">{{ stats.temperature.avg|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">最大值</div>
+            <div class="value" id="stat-temperature-max">{{ stats.temperature.max|default:"--" }}</div>
+        </div>
+    </div>
+
+    <h3>酸鹼值 (pH)</h3>
+    <div class="stat-row">
+        <div class="stat-value">
+            <div class="label">最小值</div>
+            <div class="value" id="stat-ph-min">{{ stats.ph.min|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">平均值</div>
+            <div class="value" id="stat-ph-avg">{{ stats.ph.avg|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">最大值</div>
+            <div class="value" id="stat-ph-max">{{ stats.ph.max|default:"--" }}</div>
+        </div>
+    </div>
+
+    <h3>溶氧 (mg/L)</h3>
+    <div class="stat-row">
+        <div class="stat-value">
+            <div class="label">最小值</div>
+            <div class="value" id="stat-oxygen-min">{{ stats.oxygen.min|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">平均值</div>
+            <div class="value" id="stat-oxygen-avg">{{ stats.oxygen.avg|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">最大值</div>
+            <div class="value" id="stat-oxygen-max">{{ stats.oxygen.max|default:"--" }}</div>
+        </div>
+    </div>
+
+    <h3>鹽度 (PSU)</h3>
+    <div class="stat-row">
+        <div class="stat-value">
+            <div class="label">最小值</div>
+            <div class="value" id="stat-salinity-min">{{ stats.salinity.min|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">平均值</div>
+            <div class="value" id="stat-salinity-avg">{{ stats.salinity.avg|default:"--" }}</div>
+        </div>
+        <div class="stat-value">
+            <div class="label">最大值</div>
+            <div class="value" id="stat-salinity-max">{{ stats.salinity.max|default:"--" }}</div>
         </div>
     </div>
 </div>
 
+<!-- 數據趨勢圖 -->
 <div class="card">
-    <h2>📊 數據趨勢圖</h2>
-    <canvas id="dataChart"></canvas>
+    <h2>📈 數據趨勢圖</h2>
+    <canvas id="dataChart" data-chart-json="{{ chart_data_json|safe }}"></canvas>
 </div>
 
+<!-- 數據表格 -->
 <div class="card">
-    <h2>最新數據記錄（最新 50 筆）</h2>
+    <h2>📋 最新數據記錄（最新 50 筆）</h2>
     <table>
         <thead>
             <tr>
@@ -73,10 +165,11 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{% static 'realtime.js' %}"></script>
 <script>
 var chartData = JSON.parse('{{ chart_data_json|escapejs }}');
 var ctx = document.getElementById('dataChart').getContext('2d');
-new Chart(ctx, {
+window.chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
         labels: chartData.labels,
@@ -130,5 +223,10 @@ new Chart(ctx, {
         }
     }
 });
+
+// 初始化 realtime 監控時，把圖表實例傳給它
+if (window.realtimeInit) {
+    window.realtimeInit();
+}
 </script>
 {% endblock %}

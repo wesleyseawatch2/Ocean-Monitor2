@@ -1,0 +1,86 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}刪除定時任務 - 海洋監測系統{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>⚠️ 刪除定時任務</h2>
+    
+    <div class="alert alert-warning" style="margin: 20px 0;">
+        <strong>確認要刪除此定時任務嗎？</strong>
+        <p style="margin: 10px 0 0 0; color: #d9534f;">此操作無法復原</p>
+    </div>
+
+    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p><strong>任務名稱：</strong> {{ task.name }}</p>
+        <p><strong>任務類型：</strong> {{ task.task }}</p>
+        <p><strong>排程：</strong> 
+            {% if task.interval %}
+                每 {{ task.interval.every }} {{ task.interval.period }}
+            {% elif task.crontab %}
+                {{ task.crontab }}
+            {% else %}
+                未設定
+            {% endif %}
+        </p>
+        <p><strong>狀態：</strong> 
+            {% if task.enabled %}
+                <span style="color: green;">✓ 啟用</span>
+            {% else %}
+                <span style="color: gray;">✗ 停用</span>
+            {% endif %}
+        </p>
+    </div>
+
+    <form method="post" style="margin-top: 20px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" style="margin-right: 10px;">
+            🗑️ 確認刪除
+        </button>
+        <a href="{% url 'admin_panel:periodic_task_list' %}" class="btn btn-secondary">
+            ← 取消
+        </a>
+    </form>
+</div>
+
+<style>
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .btn-danger {
+        background-color: #d9534f;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #c9302c;
+    }
+
+    .btn-secondary {
+        background-color: #777;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #666;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+    }
+
+    .alert-warning {
+        background-color: #fcf8e3;
+        border: 1px solid #faebcc;
+        color: #8a6d3b;
+    }
+</style>
+{% endblock %}

@@ -12,56 +12,25 @@ def update_ocean_data_from_source():
     """
     定時從資料來源更新海洋數據
 
-    這個任務會由 Celery Beat 定時執行
-    可以串接：
-    - 資料庫
-    - Google Sheets API
-    - 外部 API
+    這個任務會由 Celery Beat 定時執行（預設每分鐘一次）
+    使用 OceanDataSimulator 生成真實的海洋數據模擬
     """
-    from data_ingestion.models import Station, Reading
-    from django.utils import timezone
+    from .simulation import simulate_data_for_all_stations
 
     print("[定時任務] 開始更新海洋數據...")
 
-    # TODO: 這裡串接你的資料來源
-    # 範例 1: 從資料庫讀取
-    # new_data = fetch_from_database()
+    result = simulate_data_for_all_stations()
 
-    # 範例 2: 從 Google Sheets 讀取
-    # new_data = fetch_from_google_sheets()
+    if result['status'] == 'success':
+        print(f"[定時任務] 成功生成 {result['count']} 筆數據記錄")
+        for reading in result['readings']:
+            print(f"  - {reading['station_name']}: {reading['temperature']}°C, "
+                  f"pH={reading['ph']}, 溶氧={reading['oxygen']}mg/L, "
+                  f"鹽度={reading['salinity']}psu")
+    else:
+        print(f"[定時任務] 錯誤: {result['message']}")
 
-    # 範例 3: 從外部 API 讀取
-    # new_data = fetch_from_external_api()
-
-    # 目前使用模擬資料
-    stations = Station.objects.all()
-    if not stations.exists():
-        print("[定時任務] 沒有測站資料，跳過更新")
-        return {'status': 'skipped', 'reason': 'no_stations'}
-
-    # 模擬新增一筆數據到第一個測站
-    station = stations.first()
-    new_reading = Reading.objects.create(
-        station=station,
-        timestamp=timezone.now(),
-        temperature=25.5 + (len(Reading.objects.all()) % 10) * 0.1,
-        conductivity=55000.0,
-        pressure=0.6,
-        oxygen=8.0,
-        ph=8.2,
-        fluorescence=1.1,
-        turbidity=7.0,
-        salinity=33.5,
-    )
-
-    print(f"[定時任務] 新增數據: {new_reading.id} - {station.station_name}")
-
-    return {
-        'status': 'success',
-        'station': station.station_name,
-        'reading_id': new_reading.id,
-        'timestamp': new_reading.timestamp.isoformat(),
-    }
+    return result
 
 
 @shared_task
