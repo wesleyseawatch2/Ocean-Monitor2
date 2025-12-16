@@ -34,9 +34,7 @@ else:
         }
     }
 
-# 靜態檔案設定 - 使用 WhiteNoise
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # 使用相對路徑,適用於任何環境
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# 靜態檔案設定已在 base.py 中配置 (使用 WhiteNoise)
 
 # 生產環境安全設定 (在 Zeabur 上先關閉 HTTPS 重定向,測試靜態檔案)
 SECURE_SSL_REDIRECT = False  # 暫時關閉,確認靜態檔案正常後再開啟
