@@ -15,7 +15,8 @@
       "Bash(git commit -m \"$(cat <<''EOF''\n修復 Django Admin URL 為 /admin/\n\n- 將 Django Admin 路徑從 /panel/system-admin/ 改回 /admin/\n- 避免 URL namespace 衝突\n- 修復靜態檔案路徑問題\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push)",
       "Bash(git commit:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(daphne:*)"
     ],
     "deny": [],
     "ask": []

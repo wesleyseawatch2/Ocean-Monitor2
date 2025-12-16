@@ -199,6 +199,18 @@ CACHES = {
 }
 
 # ==========================================
+# Channels 設定 - WebSocket 層使用 Redis
+# ==========================================
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [REDIS_URI],
+        },
+    },
+}
+
+# ==========================================
 # Celery Beat 定時任務設定 - 使用 django-celery-beat
 # ==========================================
 

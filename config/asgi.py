@@ -13,13 +13,13 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE',
 # 必須在 ProtocolTypeRouter 之前初始化 Django
 django_asgi_app = get_asgi_application()
 
+# 導入 WebSocket routing
+from station_data.routing import websocket_urlpatterns
+
 # ASGI 應用程式：支援 HTTP 和 WebSocket
 application = ProtocolTypeRouter({
     "http": django_asgi_app,
-    # 如果未來需要 WebSocket，在這裡添加路由
-    # "websocket": AuthMiddlewareStack(
-    #     URLRouter([
-    #         # WebSocket URL patterns
-    #     ])
-    # ),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(websocket_urlpatterns)
+    ),
 })
