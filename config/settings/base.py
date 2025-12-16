@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'admin_panel',  # 自訂後台
 
     # Third-party
+    'channels',  # ASGI / WebSocket 支援
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -65,6 +66,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
 
 DATABASES = {
     'default': {
