@@ -4,6 +4,9 @@
 
 echo "=== 開始部署 ==="
 
+# 設定生產環境
+export DJANGO_ENV=production
+
 # 1. 收集靜態檔案
 echo ">>> 收集靜態檔案..."
 python manage.py collectstatic --noinput --clear

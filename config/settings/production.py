@@ -35,7 +35,7 @@ else:
     }
 
 # 靜態檔案設定 - 使用 WhiteNoise
-STATIC_ROOT = '/app/staticfiles'  # Zeabur 容器中的絕對路徑
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # 使用相對路徑,適用於任何環境
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # 生產環境安全設定 (在 Zeabur 上先關閉 HTTPS 重定向,測試靜態檔案)
