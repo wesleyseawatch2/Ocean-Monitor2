@@ -4,7 +4,7 @@
 {% block title %}{{ station.station_name }} - 海洋監測系統{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'realtime.css' %}">
+<link rel="stylesheet" href="{% static 'realtime/realtime.css' %}">
 
 <div class="card">
     <h2>🌊 {{ station.station_name }}</h2>
@@ -165,7 +165,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="{% static 'realtime.js' %}"></script>
+<script src="{% static 'realtime/realtime.js' %}"></script>
 <script>
 var chartData = JSON.parse('{{ chart_data_json|escapejs }}');
 var ctx = document.getElementById('dataChart').getContext('2d');
