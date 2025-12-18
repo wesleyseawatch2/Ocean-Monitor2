@@ -48,6 +48,17 @@ CSRF_TRUSTED_ORIGINS = [
     "https://ocean-monitor2.zeabur.app",
 ]
 
+# ==========================================
+# Channels 設定 - 在 Zeabur 上使用內存通道層
+# ==========================================
+# 注意：內存通道層只適合單一進程，不支援多個 worker
+# 如果需要擴展，請在 Zeabur 上添加 Redis 服務
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
 # 日誌配置 - 在生產環境中輸出詳細錯誤訊息
 LOGGING = {
     'version': 1,
