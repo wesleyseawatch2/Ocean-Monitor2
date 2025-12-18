@@ -13,6 +13,17 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE',
 # 必須在 ProtocolTypeRouter 之前初始化 Django
 django_asgi_app = get_asgi_application()
 
+# 用 WhiteNoise 包裝 Django ASGI 應用以提供靜態文件服務
+from whitenoise import WhiteNoise
+from django.conf import settings
+
+# 包裝靜態文件處理
+django_asgi_app = WhiteNoise(
+    django_asgi_app,
+    root=settings.STATIC_ROOT,
+    prefix=settings.STATIC_URL,
+)
+
 # 導入 WebSocket routing
 from station_data.routing import websocket_urlpatterns
 
