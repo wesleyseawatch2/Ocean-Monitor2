@@ -38,7 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # WhiteNoise 在 ASGI 模式下不支援，改用 URL 路由提供靜態文件
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise 靜態檔案服務
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -103,13 +103,18 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# 靜態檔案儲存配置 (Django 4.2+ 使用 STORAGES)
-# 在 ASGI 環境下使用標準儲存後端，靜態文件通過 URL 路由提供
+# WhiteNoise 靜態檔案配置 (Django 4.2+ 使用 STORAGES)
+# 使用 CompressedStaticFilesStorage（不使用 Manifest，避免部署問題）
 STORAGES = {
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
+
+# WhiteNoise 配置
+WHITENOISE_USE_FINDERS = True  # 開發時直接從源目錄提供靜態文件
+WHITENOISE_AUTOREFRESH = True  # 開發時自動刷新
+WHITENOISE_MANIFEST_STRICT = False  # 不強制要求 manifest，避免部署錯誤
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
