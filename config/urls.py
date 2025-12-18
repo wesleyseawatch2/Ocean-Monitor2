@@ -20,9 +20,8 @@ urlpatterns = [
     # 其他功能
     path('accounts/', include('allauth.urls')),  # allauth 的所有 URLs (Google登入)
     path('stations/', include('station_data.urls')),  # 測站資料頁面
-]+static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]
 
-# 在生產環境使用 WhiteNoise 提供靜態檔案
-# 在開發環境使用 Django 內建靜態檔案服務
-#if settings.DEBUG:
-#    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+# 添加靜態文件和媒體文件路由
+# 在開發和生產環境都需要 (ASGI 不會自動處理)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
