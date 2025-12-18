@@ -104,9 +104,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # WhiteNoise 靜態檔案配置 (Django 4.2+ 使用 STORAGES)
+# 在生產環境使用 CompressedStaticFilesStorage (不使用 Manifest，避免部署問題)
 STORAGES = {
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
