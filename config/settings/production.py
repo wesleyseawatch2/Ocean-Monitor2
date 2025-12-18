@@ -8,7 +8,7 @@ import dj_database_url
 # 載入 .env 檔案 (如果存在)
 load_dotenv()
 
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'False') == 'True'  # 可透過環境變數控制
 
 # 從環境變數讀取允許的主機
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
@@ -47,3 +47,42 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_TRUSTED_ORIGINS = [
     "https://ocean-monitor2.zeabur.app",
 ]
+
+# 日誌配置 - 在生產環境中輸出詳細錯誤訊息
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.template': {
+            'handlers': ['console'],
+            'level': 'DEBUG',  # 詳細記錄模板錯誤
+            'propagate': False,
+        },
+    },
+}
