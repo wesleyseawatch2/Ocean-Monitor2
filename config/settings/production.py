@@ -49,13 +49,35 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # ==========================================
-# Channels 設定 - 在 Zeabur 上使用內存通道層
+# Redis 設定 - 使用 Zeabur Redis 服務
 # ==========================================
-# 注意：內存通道層只適合單一進程，不支援多個 worker
-# 如果需要擴展，請在 Zeabur 上添加 Redis 服務
+# Zeabur 會自動注入 REDIS_CONNECTION_STRING 環境變數
+redis_url = os.getenv('REDIS_CONNECTION_STRING', os.getenv('REDIS_URI', 'redis://127.0.0.1:6379/1'))
+
+# Celery - 使用 Zeabur Redis
+CELERY_BROKER_URL = redis_url
+CELERY_RESULT_BACKEND = redis_url
+
+# Cache - 使用 Zeabur Redis
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': redis_url,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'ocean_monitor',
+        'TIMEOUT': 300,
+    }
+}
+
+# Channels - 使用 Zeabur Redis
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [redis_url],
+        },
     },
 }
 
