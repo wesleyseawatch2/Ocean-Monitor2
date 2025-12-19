@@ -25,8 +25,8 @@
             <td style="padding: 1rem;">{{ reading.timestamp|date:"Y-m-d H:i:s" }}</td>
             <td style="padding: 1rem;">{{ reading.temperature|floatformat:2 }}</td>
             <td style="padding: 1rem;">{{ reading.salinity|floatformat:2 }}</td>
-            <td style="padding: 1rem;">{{ reading.ph_value|floatformat:2 }}</td>
-            <td style="padding: 1rem;">{{ reading.dissolved_oxygen|floatformat:2 }}</td>
+            <td style="padding: 1rem;">{{ reading.ph|floatformat:2 }}</td>
+            <td style="padding: 1rem;">{{ reading.oxygen|floatformat:2 }}</td>
         </tr>
         {% empty %}
         <tr>

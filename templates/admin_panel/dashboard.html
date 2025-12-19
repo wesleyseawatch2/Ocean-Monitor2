@@ -68,7 +68,7 @@
                 <td style="padding: 1rem;">{{ reading.timestamp|date:"Y-m-d H:i" }}</td>
                 <td style="padding: 1rem;">{{ reading.temperature|floatformat:2 }}°C</td>
                 <td style="padding: 1rem;">{{ reading.salinity|floatformat:2 }} PSU</td>
-                <td style="padding: 1rem;">{{ reading.ph_value|floatformat:2 }}</td>
+                <td style="padding: 1rem;">{{ reading.ph|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>
