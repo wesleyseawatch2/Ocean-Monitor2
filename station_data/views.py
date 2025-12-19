@@ -1,9 +1,11 @@
 #ocean_monitor\station_data\views.py
 import json
 from django.shortcuts import render, get_object_or_404
-from django.http import StreamingHttpResponse
+from django.http import StreamingHttpResponse, JsonResponse
 from django.views.decorators.http import condition
+from django.core.paginator import Paginator
 from data_ingestion.models import Station, Reading
+from station_data.models import Report
 from analysis_tools.calculations import calculate_statistics
 from analysis_tools.chart_helpers import prepare_chart_data
 import time
@@ -125,3 +127,57 @@ def station_detail_realtime(request, station_id):
     response['Cache-Control'] = 'no-cache'
     response['X-Accel-Buffering'] = 'no'
     return response
+
+
+def report_list(request):
+    """報告列表頁面"""
+    # 獲取查詢參數
+    report_type = request.GET.get('type', '')
+
+    # 基本查詢
+    reports = Report.objects.all()
+
+    # 根據類型過濾
+    if report_type:
+        reports = reports.filter(report_type=report_type)
+
+    # 分頁
+    paginator = Paginator(reports, 20)  # 每頁 20 個報告
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # 統計不同類型的報告數量
+    report_stats = {
+        'total': Report.objects.count(),
+        'daily_statistics': Report.objects.filter(report_type='daily_statistics').count(),
+        'data_update': Report.objects.filter(report_type='data_update').count(),
+        'alert_check': Report.objects.filter(report_type='alert_check').count(),
+        'custom': Report.objects.filter(report_type='custom').count(),
+    }
+
+    context = {
+        'page_obj': page_obj,
+        'report_stats': report_stats,
+        'current_type': report_type,
+        'report_types': Report.REPORT_TYPES,
+    }
+    return render(request, 'station_data/report_list.html', context)
+
+
+def report_detail(request, report_id):
+    """報告詳情頁面"""
+    report = get_object_or_404(Report, pk=report_id)
+
+    context = {
+        'report': report,
+    }
+    return render(request, 'station_data/report_detail.html', context)
+
+
+def report_delete(request, report_id):
+    """刪除報告"""
+    if request.method == 'POST':
+        report = get_object_or_404(Report, pk=report_id)
+        report.delete()
+        return JsonResponse({'status': 'success', 'message': '報告已刪除'})
+    return JsonResponse({'status': 'error', 'message': '無效的請求方法'}, status=400)

@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ report.title }} - 海洋監測系統{% endblock %}
+
+{% block content %}
+<div class="card">
+    <!-- 頂部操作欄 -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <a href="{% url 'station_data:report_list' %}" style="text-decoration: none; color: #007bff;">← 返回報告列表</a>
+        </div>
+        <div>
+            <button onclick="window.print()" class="btn btn-sm btn-secondary">列印報告</button>
+            <button onclick="deleteReport({{ report.id }})" class="btn btn-sm btn-danger">刪除報告</button>
+        </div>
+    </div>
+
+    <!-- 報告標題和基本資訊 -->
+    <div class="report-header">
+        <h1>{{ report.title }}</h1>
+        <div class="report-meta">
+            <span class="badge badge-{{ report.get_status_class }}">
+                {{ report.get_status_display }}
+            </span>
+            <span style="margin-left: 15px; color: #666;">
+                類型：{{ report.get_report_type_display }}
+            </span>
+            <span style="margin-left: 15px; color: #666;">
+                創建時間：{{ report.created_at|date:"Y年m月d日 H:i:s" }}
+            </span>
+            {% if report.task_id %}
+            <span style="margin-left: 15px; color: #999; font-size: 13px;">
+                任務ID：{{ report.task_id }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 報告摘要 -->
+    <div class="report-section">
+        <h3>報告摘要</h3>
+        <div class="summary-box">
+            {{ report.summary|linebreaks }}
+        </div>
+    </div>
+
+    <!-- 報告內容 -->
+    <div class="report-section">
+        <h3>詳細內容</h3>
+
+        {% if report.report_type == 'daily_statistics' %}
+            <!-- 每日統計報告的特殊展示 -->
+            <div class="statistics-grid">
+                <!-- 總覽卡片 -->
+                <div class="stat-card-detail">
+                    <h4>數據總覽</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">總數據筆數：</span>
+                        <span class="stat-value">{{ report.content.total_readings }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">報告日期：</span>
+                        <span class="stat-value">{{ report.content.date }}</span>
+                    </div>
+                </div>
+
+                <!-- 平均值卡片 -->
+                {% if report.content.averages %}
+                <div class="stat-card-detail">
+                    <h4>平均值統計</h4>
+                    {% if report.content.averages.temperature %}
+                    <div class="stat-item">
+                        <span class="stat-label">平均溫度：</span>
+                        <span class="stat-value">{{ report.content.averages.temperature|floatformat:2 }}°C</span>
+                    </div>
+                    {% endif %}
+                    {% if report.content.averages.max_temperature %}
+                    <div class="stat-item">
+                        <span class="stat-label">最高溫度：</span>
+                        <span class="stat-value">{{ report.content.averages.max_temperature|floatformat:2 }}°C</span>
+                    </div>
+                    {% endif %}
+                    {% if report.content.averages.min_temperature %}
+                    <div class="stat-item">
+                        <span class="stat-label">最低溫度：</span>
+                        <span class="stat-value">{{ report.content.averages.min_temperature|floatformat:2 }}°C</span>
+                    </div>
+                    {% endif %}
+                    {% if report.content.averages.salinity %}
+                    <div class="stat-item">
+                        <span class="stat-label">平均鹽度：</span>
+                        <span class="stat-value">{{ report.content.averages.salinity|floatformat:4 }}</span>
+                    </div>
+                    {% endif %}
+                    {% if report.content.averages.ph %}
+                    <div class="stat-item">
+                        <span class="stat-label">平均pH值：</span>
+                        <span class="stat-value">{{ report.content.averages.ph|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                    {% if report.content.averages.oxygen %}
+                    <div class="stat-item">
+                        <span class="stat-label">平均溶氧：</span>
+                        <span class="stat-value">{{ report.content.averages.oxygen|floatformat:3 }} mg/L</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 測站統計表格 -->
+            {% if report.content.station_stats %}
+            <h4 style="margin-top: 30px;">各測站數據統計</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>測站名稱</th>
+                        <th>裝設地點</th>
+                        <th>數據筆數</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for station in report.content.station_stats %}
+                    <tr>
+                        <td>{{ station.station_name }}</td>
+                        <td>{{ station.location }}</td>
+                        <td>{{ station.today_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
+        {% else %}
+            <!-- 其他類型報告的通用 JSON 展示 -->
+            <div class="json-display">
+                <pre>{{ report.content|safe }}</pre>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.report-header {
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.report-header h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.report-meta {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.report-section {
+    margin-bottom: 30px;
+}
+
+.report-section h3 {
+    color: #007bff;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.summary-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 15px 20px;
+    border-radius: 4px;
+    line-height: 1.6;
+}
+
+.statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-card-detail {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-card-detail h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-item .stat-label {
+    color: #666;
+    font-size: 14px;
+}
+
+.stat-item .stat-value {
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.json-display {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    overflow-x: auto;
+}
+
+.json-display pre {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+@media print {
+    .btn, a {
+        display: none !important;
+    }
+
+    .report-header {
+        border-bottom: 2px solid #000;
+    }
+}
+</style>
+
+<script>
+function deleteReport(reportId) {
+    if (!confirm('確定要刪除此報告嗎？刪除後將無法恢復。')) {
+        return;
+    }
+
+    fetch(`/stations/reports/${reportId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('報告已刪除');
+            window.location.href = '{% url "station_data:report_list" %}';
+        } else {
+            alert('刪除失敗：' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('刪除失敗');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

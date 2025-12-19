@@ -105,9 +105,10 @@ def generate_daily_statistics():
     - 異常數據數量
     """
     from data_ingestion.models import Station, Reading
+    from station_data.models import Report
     from django.utils import timezone
     from datetime import timedelta
-    from django.db.models import Avg, Count
+    from django.db.models import Avg, Count, Max, Min
 
     print("[定時任務] 開始產生每日統計報告...")
 
@@ -117,26 +118,69 @@ def generate_daily_statistics():
     today_readings = Reading.objects.filter(timestamp__gte=today_start)
 
     # 統計各測站數據筆數
-    station_stats = Station.objects.annotate(
-        today_count=Count('readings', filter=today_readings.query.where)
-    ).values('station_name', 'today_count')
+    station_stats = []
+    for station in Station.objects.all():
+        count = today_readings.filter(station=station).count()
+        station_stats.append({
+            'station_name': station.station_name,
+            'today_count': count,
+            'location': station.location
+        })
 
-    # 計算平均值
+    # 計算平均值和範圍
     avg_stats = today_readings.aggregate(
         avg_temperature=Avg('temperature'),
+        max_temperature=Max('temperature'),
+        min_temperature=Min('temperature'),
         avg_salinity=Avg('salinity'),
         avg_ph=Avg('ph'),
         avg_oxygen=Avg('oxygen'),
     )
 
-    print(f"[定時任務] 今日數據筆數: {today_readings.count()}")
+    total_readings = today_readings.count()
+
+    print(f"[定時任務] 今日數據筆數: {total_readings}")
     print(f"[定時任務] 平均溫度: {avg_stats['avg_temperature']:.2f}°C" if avg_stats['avg_temperature'] else "[定時任務] 無溫度數據")
+
+    # 生成報告摘要
+    summary_lines = [
+        f"總數據筆數: {total_readings}",
+        f"監測測站數: {len(station_stats)}",
+    ]
+    if avg_stats['avg_temperature']:
+        summary_lines.append(f"平均溫度: {float(avg_stats['avg_temperature']):.2f}°C")
+    if avg_stats['avg_salinity']:
+        summary_lines.append(f"平均鹽度: {float(avg_stats['avg_salinity']):.4f}")
+
+    # 保存報告到數據庫
+    report = Report.objects.create(
+        report_type='daily_statistics',
+        title=f'{today} 每日統計報告',
+        status='success' if total_readings > 0 else 'warning',
+        summary='\n'.join(summary_lines),
+        content={
+            'date': today.isoformat(),
+            'total_readings': total_readings,
+            'station_stats': station_stats,
+            'averages': {
+                'temperature': float(avg_stats['avg_temperature']) if avg_stats['avg_temperature'] else None,
+                'salinity': float(avg_stats['avg_salinity']) if avg_stats['avg_salinity'] else None,
+                'ph': float(avg_stats['avg_ph']) if avg_stats['avg_ph'] else None,
+                'oxygen': float(avg_stats['avg_oxygen']) if avg_stats['avg_oxygen'] else None,
+                'max_temperature': float(avg_stats['max_temperature']) if avg_stats['max_temperature'] else None,
+                'min_temperature': float(avg_stats['min_temperature']) if avg_stats['min_temperature'] else None,
+            }
+        },
+    )
+
+    print(f"[定時任務] 報告已保存，ID: {report.id}")
 
     return {
         'status': 'success',
+        'report_id': report.id,
         'date': today.isoformat(),
-        'total_readings': today_readings.count(),
-        'station_stats': list(station_stats),
+        'total_readings': total_readings,
+        'station_stats': station_stats,
         'averages': avg_stats,
     }
 

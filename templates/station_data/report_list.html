@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}報告管理 - 海洋監測系統{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>報告管理中心</h2>
+    </div>
+
+    <!-- 報告統計卡片 -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+        <div class="stat-card">
+            <div class="stat-label">總報告數</div>
+            <div class="stat-value">{{ report_stats.total }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">每日統計</div>
+            <div class="stat-value">{{ report_stats.daily_statistics }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">數據更新</div>
+            <div class="stat-value">{{ report_stats.data_update }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">異常檢查</div>
+            <div class="stat-value">{{ report_stats.alert_check }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">自定義報告</div>
+            <div class="stat-value">{{ report_stats.custom }}</div>
+        </div>
+    </div>
+
+    <!-- 過濾器 -->
+    <div style="margin-bottom: 20px;">
+        <label>篩選報告類型：</label>
+        <select id="reportTypeFilter" onchange="filterReports()" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+            <option value="">全部</option>
+            {% for type_value, type_label in report_types %}
+            <option value="{{ type_value }}" {% if current_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- 報告列表 -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 50px;">ID</th>
+                <th>報告類型</th>
+                <th>標題</th>
+                <th style="width: 100px;">狀態</th>
+                <th>摘要</th>
+                <th style="width: 150px;">創建時間</th>
+                <th style="width: 150px;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for report in page_obj %}
+            <tr>
+                <td>{{ report.id }}</td>
+                <td>{{ report.get_report_type_display }}</td>
+                <td>
+                    <a href="{% url 'station_data:report_detail' report.id %}" style="text-decoration: none; color: #007bff;">
+                        {{ report.title }}
+                    </a>
+                </td>
+                <td>
+                    <span class="badge badge-{{ report.get_status_class }}">
+                        {{ report.get_status_display }}
+                    </span>
+                </td>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ report.summary|truncatewords:15 }}
+                </td>
+                <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                    <a href="{% url 'station_data:report_detail' report.id %}" class="btn btn-sm btn-primary">查看</a>
+                    <button onclick="deleteReport({{ report.id }})" class="btn btn-sm btn-danger">刪除</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center; color:#999; padding: 40px;">
+                    尚無報告資料
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 分頁 -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="margin-top: 20px; text-align: center;">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% if current_type %}&type={{ current_type }}{% endif %}" class="btn btn-sm">首頁</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}" class="btn btn-sm">上一頁</a>
+        {% endif %}
+
+        <span style="margin: 0 15px;">
+            第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}" class="btn btn-sm">下一頁</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if current_type %}&type={{ current_type }}{% endif %}" class="btn btn-sm">末頁</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-sm {
+    padding: 4px 12px;
+    font-size: 13px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+</style>
+
+<script>
+function filterReports() {
+    const select = document.getElementById('reportTypeFilter');
+    const selectedType = select.value;
+    if (selectedType) {
+        window.location.href = '?type=' + selectedType;
+    } else {
+        window.location.href = '{% url "station_data:report_list" %}';
+    }
+}
+
+function deleteReport(reportId) {
+    if (!confirm('確定要刪除此報告嗎？')) {
+        return;
+    }
+
+    fetch(`/stations/reports/${reportId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('報告已刪除');
+            window.location.reload();
+        } else {
+            alert('刪除失敗：' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('刪除失敗');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

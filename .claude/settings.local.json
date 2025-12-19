@@ -16,7 +16,8 @@
       "Bash(git push)",
       "Bash(git commit:*)",
       "Bash(cat:*)",
-      "Bash(daphne:*)"
+      "Bash(daphne:*)",
+      "Bash(./venv/Scripts/python.exe manage.py:*)"
     ],
     "deny": [],
     "ask": []
