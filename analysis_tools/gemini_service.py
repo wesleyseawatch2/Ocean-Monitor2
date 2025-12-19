@@ -21,7 +21,7 @@ class GeminiInsightService:
             raise ValueError("GEMINI_API_KEY 未設置。請在環境變量或 settings.py 中設置。")
 
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        self.model = genai.GenerativeModel('gemini-2.5-pro')
 
     def generate_report_insight(self, report):
         """
