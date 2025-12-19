@@ -136,33 +136,126 @@
 <!-- 數據表格 -->
 <div class="card">
     <h2>📋 最新數據記錄（最新 50 筆）</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>時間</th>
-                <th>溫度</th>
-                <th>電導率</th>
-                <th>酸鹼值</th>
-                <th>溶氧</th>
-                <th>鹽度</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for reading in readings %}
-            <tr>
-                <td>{{ reading.timestamp }}</td>
-                <td>{{ reading.temperature|default:"--" }}</td>
-                <td>{{ reading.conductivity|default:"--" }}</td>
-                <td>{{ reading.ph|default:"--" }}</td>
-                <td>{{ reading.oxygen|default:"--" }}</td>
-                <td>{{ reading.salinity|default:"--" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" style="text-align:center; color:#999;">尚無數據記錄</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <!-- 數據表格容器 -->
+    <div style="position: relative; overflow: hidden;">
+        <!-- 左右切換按鈕 -->
+        <button id="scrollLeft" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 0 4px 4px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
+            ◀
+        </button>
+        <button id="scrollRight" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 4px 0 0 4px; box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
+            ▶
+        </button>
+
+        <!-- 可滾動的表格 -->
+        <div id="tableContainer" style="overflow-x: auto; scroll-behavior: smooth; padding: 0 2.5rem;">
+            <table style="min-width: 1200px;">
+                <thead>
+                    <tr>
+                        <th style="white-space: nowrap;">時間</th>
+                        <th style="white-space: nowrap;">溫度 (°C)</th>
+                        <th style="white-space: nowrap;">酸鹼值</th>
+                        <th style="white-space: nowrap;">溶氧 (mg/L)</th>
+                        <th style="white-space: nowrap;">鹽度 (PSU)</th>
+                        <th style="white-space: nowrap;">電導率 (mS/cm)</th>
+                        <th style="white-space: nowrap;">壓力 (dbar)</th>
+                        <th style="white-space: nowrap;">螢光值 (µg/L)</th>
+                        <th style="white-space: nowrap;">濁度 (NTU)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in readings %}
+                    <tr>
+                        <td style="white-space: nowrap;">{{ reading.timestamp }}</td>
+                        <td style="white-space: nowrap;">{{ reading.temperature|floatformat:2|default:"--" }}</td>
+                        <td style="white-space: nowrap;">{{ reading.ph|floatformat:2|default:"--" }}</td>
+                        <td style="white-space: nowrap;">{{ reading.oxygen|floatformat:2|default:"--" }}</td>
+                        <td style="white-space: nowrap;">{{ reading.salinity|floatformat:2|default:"--" }}</td>
+                        <td style="white-space: nowrap;">{{ reading.conductivity|floatformat:2|default:"--" }}</td>
+                        <td style="white-space: nowrap;">{{ reading.pressure|floatformat:2|default:"--" }}</td>
+                        <td style="white-space: nowrap;">{{ reading.fluorescence|floatformat:2|default:"--" }}</td>
+                        <td style="white-space: nowrap;">{{ reading.turbidity|floatformat:2|default:"--" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" style="text-align:center; color:#999;">尚無數據記錄</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 1rem;">
+        提示: 使用左右箭頭按鈕或滑動查看完整數據
+    </p>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('tableContainer');
+    const leftBtn = document.getElementById('scrollLeft');
+    const rightBtn = document.getElementById('scrollRight');
+
+    if (container && leftBtn && rightBtn) {
+        // 左右滾動功能
+        leftBtn.addEventListener('click', function() {
+            container.scrollLeft -= 300;
+        });
+
+        rightBtn.addEventListener('click', function() {
+            container.scrollLeft += 300;
+        });
+
+        // 根據滾動位置顯示/隱藏按鈕
+        function updateButtons() {
+            if (container.scrollLeft <= 0) {
+                leftBtn.style.opacity = '0.3';
+                leftBtn.style.cursor = 'default';
+            } else {
+                leftBtn.style.opacity = '1';
+                leftBtn.style.cursor = 'pointer';
+            }
+
+            if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 10) {
+                rightBtn.style.opacity = '0.3';
+                rightBtn.style.cursor = 'default';
+            } else {
+                rightBtn.style.opacity = '1';
+                rightBtn.style.cursor = 'pointer';
+            }
+        }
+
+        container.addEventListener('scroll', updateButtons);
+        updateButtons();
+
+        // 支持觸控滑動
+        let isDown = false;
+        let startX;
+        let scrollLeftStart;
+
+        container.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX - container.offsetLeft;
+            scrollLeftStart = container.scrollLeft;
+        });
+
+        container.addEventListener('mouseleave', () => {
+            isDown = false;
+        });
+
+        container.addEventListener('mouseup', () => {
+            isDown = false;
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - container.offsetLeft;
+            const walk = (x - startX) * 2;
+            container.scrollLeft = scrollLeftStart - walk;
+        });
+    }
+});
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{% static 'realtime/realtime.js' %}"></script>
