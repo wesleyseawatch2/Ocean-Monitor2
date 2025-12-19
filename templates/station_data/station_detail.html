@@ -6,6 +6,9 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'realtime/realtime.css' %}">
 
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <style>
 /* 時間範圍按鈕樣式 */
 .time-range-btn {
@@ -57,10 +60,22 @@ label:hover {
 
 <div class="card">
     <h2>🌊 {{ station.station_name }}</h2>
-    <p><strong>設備型號：</strong>{{ station.device_model }}</p>
-    <p><strong>裝設地點：</strong>{{ station.location }}</p>
-    <p><strong>裝設日期：</strong>{{ station.install_date }}</p>
-    <p><strong>數據筆數：</strong><span id="total-reading-count">{{ total_count }}</span> 筆</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div>
+            <p><strong>設備型號：</strong>{{ station.device_model }}</p>
+            <p><strong>裝設地點：</strong>{{ station.location }}</p>
+            <p><strong>裝設日期：</strong>{{ station.install_date }}</p>
+            <p><strong>數據筆數：</strong><span id="total-reading-count">{{ total_count }}</span> 筆</p>
+            {% if station.latitude and station.longitude %}
+            <p><strong>📍 座標位置：</strong>{{ station.latitude }}, {{ station.longitude }}</p>
+            {% endif %}
+        </div>
+        {% if station.latitude and station.longitude %}
+        <div>
+            <div id="stationMap" style="height: 250px; border-radius: 8px; border: 2px solid #dee2e6;"></div>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 <!-- 實時數據容器 - JavaScript 會在此插入狀態指示器 -->
@@ -361,6 +376,34 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+{% if station.latitude and station.longitude %}
+<script>
+// 初始化地圖
+document.addEventListener('DOMContentLoaded', function() {
+    const lat = parseFloat('{{ station.latitude }}');
+    const lng = parseFloat('{{ station.longitude }}');
+
+    if (lat && lng) {
+        // 創建地圖
+        const map = L.map('stationMap').setView([lat, lng], 13);
+
+        // 添加 OpenStreetMap 圖層
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // 添加標記
+        const marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup('<b>{{ station.station_name }}</b><br>{{ station.location }}').openPopup();
+    }
+});
+</script>
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{% static 'realtime/realtime.js' %}"></script>
 <script>
@@ -489,16 +532,39 @@ document.querySelectorAll('.param-checkbox').forEach(checkbox => {
 // 初始化圖表 - 顯示默認選中的參數
 updateChart();
 
-// 時間範圍切換函數
+// 時間範圍切換函數 - 使用 AJAX 不重新載入頁面
 function changeTimeRange(range) {
-    // 獲取當前 URL
-    const url = new URL(window.location.href);
+    // 更新按鈕狀態
+    document.querySelectorAll('.time-range-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
 
-    // 更新時間範圍參數
-    url.searchParams.set('time_range', range);
+    // 顯示載入中狀態
+    const canvas = document.getElementById('dataChart');
+    canvas.style.opacity = '0.5';
 
-    // 重新載入頁面
-    window.location.href = url.toString();
+    // 使用 AJAX 獲取新數據
+    const stationId = '{{ station.id }}';
+    fetch('/stations/' + stationId + '/chart-data/?time_range=' + range)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 更新全局 chartData
+                chartData = data.chart_data;
+
+                // 更新圖表
+                updateChart();
+
+                // 恢復透明度
+                canvas.style.opacity = '1';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching chart data:', error);
+            canvas.style.opacity = '1';
+            alert('載入圖表數據失敗,請重試');
+        });
 }
 
 // 初始化 realtime 監控時，把圖表實例傳給它

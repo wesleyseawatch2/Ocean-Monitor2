@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.station_list, name='station_list'),
     path('<int:station_id>/', views.station_detail, name='station_detail'),
     path('<int:station_id>/realtime/', views.station_detail_realtime, name='station_detail_realtime'),
+    path('<int:station_id>/chart-data/', views.get_chart_data_ajax, name='get_chart_data_ajax'),
     path('readings/', views.reading_list, name='reading_list'),
 
     # 報告相關路由

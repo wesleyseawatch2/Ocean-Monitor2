@@ -8,11 +8,13 @@ class Station(models.Model):
     device_model = models.CharField(max_length=50, verbose_name="設備型號")
     location = models.CharField(max_length=100, verbose_name="裝設地點")
     install_date = models.DateField(verbose_name="裝設日期")
-    
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="緯度")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="經度")
+
     class Meta:
         verbose_name = "測站"
         verbose_name_plural = "測站"
-    
+
     def __str__(self):
         return f"{self.station_name} ({self.location})"
 

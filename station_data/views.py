@@ -80,6 +80,47 @@ def reading_list(request):
     return render(request, 'station_data/reading_list.html', context)
 
 
+def get_chart_data_ajax(request, station_id):
+    """AJAX 端點 - 獲取圖表數據"""
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.http import JsonResponse
+
+    station = get_object_or_404(Station, pk=station_id)
+    time_range = request.GET.get('time_range', '24h')
+
+    # 時間範圍映射
+    now = timezone.now()
+    time_ranges = {
+        '1h': timedelta(hours=1),
+        '6h': timedelta(hours=6),
+        '12h': timedelta(hours=12),
+        '24h': timedelta(hours=24),
+        '3d': timedelta(days=3),
+        '7d': timedelta(days=7),
+        '30d': timedelta(days=30),
+        'all': None,
+    }
+
+    time_delta = time_ranges.get(time_range, timedelta(hours=24))
+
+    # 獲取數據
+    if time_delta:
+        start_time = now - time_delta
+        chart_readings = station.readings.filter(timestamp__gte=start_time).order_by('-timestamp')[:200]
+    else:
+        chart_readings = station.readings.all().order_by('-timestamp')[:200]
+
+    # 準備圖表數據
+    chart_data = prepare_chart_data(chart_readings)
+
+    return JsonResponse({
+        'status': 'success',
+        'chart_data': chart_data,
+        'time_range': time_range,
+    })
+
+
 def station_detail_realtime(request, station_id):
     """
     實時推送站點數據的端點（使用 Server-Sent Events）
