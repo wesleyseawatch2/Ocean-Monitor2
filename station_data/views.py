@@ -181,3 +181,49 @@ def report_delete(request, report_id):
         report.delete()
         return JsonResponse({'status': 'success', 'message': '報告已刪除'})
     return JsonResponse({'status': 'error', 'message': '無效的請求方法'}, status=400)
+
+
+def report_insight(request, report_id):
+    """
+    使用 Gemini AI 生成報告洞察
+
+    注意: 此功能只能讀取報告數據,不能讀取完整的原始數據
+    """
+    if request.method == 'POST':
+        try:
+            from analysis_tools.gemini_service import get_gemini_service
+
+            # 獲取報告
+            report = get_object_or_404(Report, pk=report_id)
+
+            # 獲取 Gemini 服務
+            gemini_service = get_gemini_service()
+
+            if not gemini_service:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Gemini API 未配置。請設置 GEMINI_API_KEY 環境變量。'
+                }, status=500)
+
+            # 生成洞察
+            insight = gemini_service.generate_report_insight(report)
+
+            if insight['status'] == 'success':
+                return JsonResponse({
+                    'status': 'success',
+                    'insight': insight['content'],
+                    'report_id': report.id,
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f"生成洞察失敗: {insight.get('error', '未知錯誤')}"
+                }, status=500)
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'發生錯誤: {str(e)}'
+            }, status=500)
+
+    return JsonResponse({'status': 'error', 'message': '無效的請求方法'}, status=400)

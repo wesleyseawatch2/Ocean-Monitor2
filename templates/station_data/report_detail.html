@@ -10,6 +10,9 @@
             <a href="{% url 'station_data:report_list' %}" style="text-decoration: none; color: #007bff;">← 返回報告列表</a>
         </div>
         <div>
+            <button onclick="generateInsight({{ report.id }})" class="btn btn-sm btn-primary" id="insightBtn">
+                🤖 生成 AI 洞察
+            </button>
             <button onclick="window.print()" class="btn btn-sm btn-secondary">列印報告</button>
             <button onclick="deleteReport({{ report.id }})" class="btn btn-sm btn-danger">刪除報告</button>
         </div>
@@ -33,6 +36,18 @@
                 任務ID：{{ report.task_id }}
             </span>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- AI 洞察區域 -->
+    <div id="insightSection" class="report-section" style="display: none;">
+        <h3>🤖 AI 數據洞察</h3>
+        <div class="insight-box" id="insightContent">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>AI 正在分析報告數據,請稍候...</p>
+            </div>
+            <div id="insightText" style="display: none;"></div>
         </div>
     </div>
 
@@ -293,6 +308,71 @@
     background-color: #c82333;
 }
 
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-primary:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.insight-box {
+    background-color: #f0f8ff;
+    border-left: 4px solid #007bff;
+    padding: 20px;
+    border-radius: 4px;
+    line-height: 1.8;
+    min-height: 100px;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 30px;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#insightText {
+    white-space: pre-wrap;
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+#insightText h1, #insightText h2, #insightText h3, #insightText h4 {
+    color: #007bff;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#insightText strong {
+    color: #333;
+}
+
+#insightText ul, #insightText ol {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
 @media print {
     .btn, a {
         display: none !important;
@@ -301,10 +381,100 @@
     .report-header {
         border-bottom: 2px solid #000;
     }
+
+    #insightSection {
+        display: block !important;
+    }
 }
 </style>
 
 <script>
+function generateInsight(reportId) {
+    const insightBtn = document.getElementById('insightBtn');
+    const insightSection = document.getElementById('insightSection');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const insightText = document.getElementById('insightText');
+
+    // 顯示洞察區域
+    insightSection.style.display = 'block';
+    loadingSpinner.style.display = 'block';
+    insightText.style.display = 'none';
+    insightText.innerHTML = '';
+
+    // 禁用按鈕
+    insightBtn.disabled = true;
+    insightBtn.textContent = '生成中...';
+
+    // 調用 API
+    fetch(`/stations/reports/${reportId}/insight/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingSpinner.style.display = 'none';
+
+        if (data.status === 'success') {
+            // 顯示洞察內容
+            insightText.innerHTML = formatInsightText(data.insight);
+            insightText.style.display = 'block';
+
+            // 更新按鈕
+            insightBtn.textContent = '🔄 重新生成洞察';
+            insightBtn.disabled = false;
+        } else {
+            // 顯示錯誤
+            insightText.innerHTML = `<div style="color: #dc3545; padding: 20px; text-align: center;">
+                <strong>錯誤:</strong> ${data.message}
+            </div>`;
+            insightText.style.display = 'block';
+
+            insightBtn.textContent = '🤖 生成 AI 洞察';
+            insightBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        loadingSpinner.style.display = 'none';
+
+        insightText.innerHTML = `<div style="color: #dc3545; padding: 20px; text-align: center;">
+            <strong>錯誤:</strong> 網路請求失敗,請稍後再試
+        </div>`;
+        insightText.style.display = 'block';
+
+        insightBtn.textContent = '🤖 生成 AI 洞察';
+        insightBtn.disabled = false;
+    });
+}
+
+function formatInsightText(text) {
+    // 簡單的 Markdown 樣式轉換
+    let formatted = text;
+
+    // 標題轉換
+    formatted = formatted.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    formatted = formatted.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    formatted = formatted.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+    // 粗體轉換
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // 列表轉換
+    formatted = formatted.replace(/^\* (.*$)/gim, '<li>$1</li>');
+    formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+    // 數字列表轉換
+    formatted = formatted.replace(/^\d+\. (.*$)/gim, '<li>$1</li>');
+
+    // 換行轉換
+    formatted = formatted.replace(/\n/g, '<br>');
+
+    return formatted;
+}
+
 function deleteReport(reportId) {
     if (!confirm('確定要刪除此報告嗎？刪除後將無法恢復。')) {
         return;

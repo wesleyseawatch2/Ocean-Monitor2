@@ -79,3 +79,5 @@ whitenoise==6.8.2
 zope.interface==8.1.1
 channels==4.3.2
 channels-redis==4.2.0
+google-generativeai==0.8.6
+google-ai-generativelanguage==0.6.15
