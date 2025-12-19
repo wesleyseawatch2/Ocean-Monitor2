@@ -127,22 +127,40 @@ def generate_daily_statistics():
             'location': station.location
         })
 
-    # 計算平均值和範圍 (8個完整參數)
+    # 計算平均值和範圍 (8個完整參數,每個都有 min/max)
     avg_stats = today_readings.aggregate(
+        # 溫度
         avg_temperature=Avg('temperature'),
         max_temperature=Max('temperature'),
         min_temperature=Min('temperature'),
-        avg_salinity=Avg('salinity'),
+        # pH
         avg_ph=Avg('ph'),
-        avg_oxygen=Avg('oxygen'),
-        avg_conductivity=Avg('conductivity'),
-        avg_pressure=Avg('pressure'),
-        avg_fluorescence=Avg('fluorescence'),
-        avg_turbidity=Avg('turbidity'),
         max_ph=Max('ph'),
         min_ph=Min('ph'),
+        # 溶氧
+        avg_oxygen=Avg('oxygen'),
         max_oxygen=Max('oxygen'),
         min_oxygen=Min('oxygen'),
+        # 鹽度
+        avg_salinity=Avg('salinity'),
+        max_salinity=Max('salinity'),
+        min_salinity=Min('salinity'),
+        # 電導率
+        avg_conductivity=Avg('conductivity'),
+        max_conductivity=Max('conductivity'),
+        min_conductivity=Min('conductivity'),
+        # 壓力
+        avg_pressure=Avg('pressure'),
+        max_pressure=Max('pressure'),
+        min_pressure=Min('pressure'),
+        # 螢光值
+        avg_fluorescence=Avg('fluorescence'),
+        max_fluorescence=Max('fluorescence'),
+        min_fluorescence=Min('fluorescence'),
+        # 濁度
+        avg_turbidity=Avg('turbidity'),
+        max_turbidity=Max('turbidity'),
+        min_turbidity=Min('turbidity'),
     )
 
     total_readings = today_readings.count()
@@ -160,7 +178,7 @@ def generate_daily_statistics():
     if avg_stats['avg_salinity']:
         summary_lines.append(f"平均鹽度: {float(avg_stats['avg_salinity']):.4f}")
 
-    # 保存報告到數據庫 (包含完整的 8 個參數)
+    # 保存報告到數據庫 (包含完整的 8 個參數及其 min/max)
     report = Report.objects.create(
         report_type='daily_statistics',
         title=f'{today} 每日統計報告',
@@ -171,20 +189,33 @@ def generate_daily_statistics():
             'total_readings': total_readings,
             'station_stats': station_stats,
             'averages': {
+                # 平均值
                 'temperature': float(avg_stats['avg_temperature']) if avg_stats['avg_temperature'] else None,
-                'salinity': float(avg_stats['avg_salinity']) if avg_stats['avg_salinity'] else None,
                 'ph': float(avg_stats['avg_ph']) if avg_stats['avg_ph'] else None,
                 'oxygen': float(avg_stats['avg_oxygen']) if avg_stats['avg_oxygen'] else None,
+                'salinity': float(avg_stats['avg_salinity']) if avg_stats['avg_salinity'] else None,
                 'conductivity': float(avg_stats['avg_conductivity']) if avg_stats['avg_conductivity'] else None,
                 'pressure': float(avg_stats['avg_pressure']) if avg_stats['avg_pressure'] else None,
                 'fluorescence': float(avg_stats['avg_fluorescence']) if avg_stats['avg_fluorescence'] else None,
                 'turbidity': float(avg_stats['avg_turbidity']) if avg_stats['avg_turbidity'] else None,
+                # 最大值
                 'max_temperature': float(avg_stats['max_temperature']) if avg_stats['max_temperature'] else None,
-                'min_temperature': float(avg_stats['min_temperature']) if avg_stats['min_temperature'] else None,
                 'max_ph': float(avg_stats['max_ph']) if avg_stats['max_ph'] else None,
-                'min_ph': float(avg_stats['min_ph']) if avg_stats['min_ph'] else None,
                 'max_oxygen': float(avg_stats['max_oxygen']) if avg_stats['max_oxygen'] else None,
+                'max_salinity': float(avg_stats['max_salinity']) if avg_stats['max_salinity'] else None,
+                'max_conductivity': float(avg_stats['max_conductivity']) if avg_stats['max_conductivity'] else None,
+                'max_pressure': float(avg_stats['max_pressure']) if avg_stats['max_pressure'] else None,
+                'max_fluorescence': float(avg_stats['max_fluorescence']) if avg_stats['max_fluorescence'] else None,
+                'max_turbidity': float(avg_stats['max_turbidity']) if avg_stats['max_turbidity'] else None,
+                # 最小值
+                'min_temperature': float(avg_stats['min_temperature']) if avg_stats['min_temperature'] else None,
+                'min_ph': float(avg_stats['min_ph']) if avg_stats['min_ph'] else None,
                 'min_oxygen': float(avg_stats['min_oxygen']) if avg_stats['min_oxygen'] else None,
+                'min_salinity': float(avg_stats['min_salinity']) if avg_stats['min_salinity'] else None,
+                'min_conductivity': float(avg_stats['min_conductivity']) if avg_stats['min_conductivity'] else None,
+                'min_pressure': float(avg_stats['min_pressure']) if avg_stats['min_pressure'] else None,
+                'min_fluorescence': float(avg_stats['min_fluorescence']) if avg_stats['min_fluorescence'] else None,
+                'min_turbidity': float(avg_stats['min_turbidity']) if avg_stats['min_turbidity'] else None,
             }
         },
     )

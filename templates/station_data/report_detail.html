@@ -120,14 +120,22 @@
                             <td>{{ report.content.averages.max_temperature|floatformat:2|default:"--" }}</td>
                             <td>{{ report.content.averages.max_ph|floatformat:2|default:"--" }}</td>
                             <td>{{ report.content.averages.max_oxygen|floatformat:2|default:"--" }}</td>
-                            <td colspan="5" style="text-align: center; color: #666;">--</td>
+                            <td>{{ report.content.averages.max_salinity|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.max_conductivity|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.max_pressure|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.max_fluorescence|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.max_turbidity|floatformat:2|default:"--" }}</td>
                         </tr>
                         <tr style="background-color: #d1ecf1;">
                             <td style="font-weight: 600;">最小值</td>
                             <td>{{ report.content.averages.min_temperature|floatformat:2|default:"--" }}</td>
                             <td>{{ report.content.averages.min_ph|floatformat:2|default:"--" }}</td>
                             <td>{{ report.content.averages.min_oxygen|floatformat:2|default:"--" }}</td>
-                            <td colspan="5" style="text-align: center; color: #666;">--</td>
+                            <td>{{ report.content.averages.min_salinity|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.min_conductivity|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.min_pressure|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.min_fluorescence|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.min_turbidity|floatformat:2|default:"--" }}</td>
                         </tr>
                     </tbody>
                 </table>
