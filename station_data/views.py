@@ -18,8 +18,41 @@ def station_list(request):
 
 
 def station_detail(request, station_id):
+    from django.utils import timezone
+    from datetime import timedelta
+
     station = get_object_or_404(Station, pk=station_id)
-    readings = station.readings.all()[:50]
+
+    # 獲取時間範圍參數 (默認為最近 24 小時)
+    time_range = request.GET.get('time_range', '24h')
+
+    # 根據時間範圍計算起始時間
+    now = timezone.now()
+    time_ranges = {
+        '1h': timedelta(hours=1),
+        '6h': timedelta(hours=6),
+        '12h': timedelta(hours=12),
+        '24h': timedelta(hours=24),
+        '3d': timedelta(days=3),
+        '7d': timedelta(days=7),
+        '30d': timedelta(days=30),
+        'all': None,
+    }
+
+    time_delta = time_ranges.get(time_range, timedelta(hours=24))
+
+    # 獲取數據
+    if time_delta:
+        start_time = now - time_delta
+        all_readings = station.readings.filter(timestamp__gte=start_time).order_by('-timestamp')
+    else:
+        all_readings = station.readings.all().order_by('-timestamp')
+
+    # 表格顯示最新 50 筆
+    readings = all_readings[:50]
+
+    # 圖表使用篩選後的所有數據
+    chart_readings = all_readings[:200]  # 限制最多 200 筆避免圖表過於擁擠
 
     stats = {
         'temperature': calculate_statistics(readings, 'temperature'),
@@ -28,7 +61,7 @@ def station_detail(request, station_id):
         'salinity': calculate_statistics(readings, 'salinity'),
     }
 
-    chart_data = prepare_chart_data(readings)
+    chart_data = prepare_chart_data(chart_readings)
 
     context = {
         'station': station,
@@ -36,6 +69,7 @@ def station_detail(request, station_id):
         'stats': stats,
         'total_count': station.readings.count(),
         'chart_data_json': json.dumps(chart_data),
+        'time_range': time_range,
     }
     return render(request, 'station_data/station_detail.html', context)
 

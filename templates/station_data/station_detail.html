@@ -7,6 +7,32 @@
 <link rel="stylesheet" href="{% static 'realtime/realtime.css' %}">
 
 <style>
+/* 時間範圍按鈕樣式 */
+.time-range-btn {
+    padding: 10px 16px;
+    border: 2px solid #ffc107;
+    background-color: white;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.time-range-btn:hover {
+    background-color: #fff8e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.time-range-btn.active {
+    background-color: #ffc107;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+}
+
 /* 參數選擇器樣式 */
 .param-checkbox:checked + span {
     font-weight: 700;
@@ -154,9 +180,24 @@ label:hover {
 <div class="card">
     <h2>📈 數據趨勢圖</h2>
 
+    <!-- 時間範圍選擇器 -->
+    <div style="margin-bottom: 15px; padding: 15px; background-color: #fff3cd; border-radius: 8px; border: 2px solid #ffc107;">
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">⏱️ 選擇時間範圍:</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button class="time-range-btn {% if time_range == '1h' %}active{% endif %}" data-range="1h" onclick="changeTimeRange('1h')">最近 1 小時</button>
+            <button class="time-range-btn {% if time_range == '6h' %}active{% endif %}" data-range="6h" onclick="changeTimeRange('6h')">最近 6 小時</button>
+            <button class="time-range-btn {% if time_range == '12h' %}active{% endif %}" data-range="12h" onclick="changeTimeRange('12h')">最近 12 小時</button>
+            <button class="time-range-btn {% if time_range == '24h' or not time_range %}active{% endif %}" data-range="24h" onclick="changeTimeRange('24h')">最近 24 小時</button>
+            <button class="time-range-btn {% if time_range == '3d' %}active{% endif %}" data-range="3d" onclick="changeTimeRange('3d')">最近 3 天</button>
+            <button class="time-range-btn {% if time_range == '7d' %}active{% endif %}" data-range="7d" onclick="changeTimeRange('7d')">最近 7 天</button>
+            <button class="time-range-btn {% if time_range == '30d' %}active{% endif %}" data-range="30d" onclick="changeTimeRange('30d')">最近 30 天</button>
+            <button class="time-range-btn {% if time_range == 'all' %}active{% endif %}" data-range="all" onclick="changeTimeRange('all')">全部數據</button>
+        </div>
+    </div>
+
     <!-- 參數選擇器 -->
     <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
-        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">選擇顯示參數:</h3>
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">📊 選擇顯示參數:</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="temperature" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
@@ -447,6 +488,18 @@ document.querySelectorAll('.param-checkbox').forEach(checkbox => {
 
 // 初始化圖表 - 顯示默認選中的參數
 updateChart();
+
+// 時間範圍切換函數
+function changeTimeRange(range) {
+    // 獲取當前 URL
+    const url = new URL(window.location.href);
+
+    // 更新時間範圍參數
+    url.searchParams.set('time_range', range);
+
+    // 重新載入頁面
+    window.location.href = url.toString();
+}
 
 // 初始化 realtime 監控時，把圖表實例傳給它
 if (window.realtimeInit) {
