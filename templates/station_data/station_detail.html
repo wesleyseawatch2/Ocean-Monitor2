@@ -6,6 +6,29 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'realtime/realtime.css' %}">
 
+<style>
+/* 參數選擇器樣式 */
+.param-checkbox:checked + span {
+    font-weight: 700;
+}
+
+.param-checkbox:checked ~ * {
+    background-color: #e7f3ff;
+}
+
+label:has(.param-checkbox:checked) {
+    border-color: #0d6efd !important;
+    background-color: #e7f3ff !important;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+label:hover {
+    border-color: #0d6efd !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+</style>
+
 <div class="card">
     <h2>🌊 {{ station.station_name }}</h2>
     <p><strong>設備型號：</strong>{{ station.device_model }}</p>
@@ -130,6 +153,46 @@
 <!-- 數據趨勢圖 -->
 <div class="card">
     <h2>📈 數據趨勢圖</h2>
+
+    <!-- 參數選擇器 -->
+    <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">選擇顯示參數:</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="temperature" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #dc3545;">🌡️ 溫度 (°C)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="ph" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #0d6efd;">⚗️ 酸鹼值 (pH)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="oxygen" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #198754;">💨 溶氧 (mg/L)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="salinity" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #6f42c1;">🧂 鹽度 (PSU)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="conductivity" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #fd7e14;">⚡ 電導率 (mS/cm)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="pressure" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #20c997;">📊 壓力 (dbar)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="fluorescence" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #d63384;">🌟 螢光值 (µg/L)</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
+                <input type="checkbox" class="param-checkbox" data-param="turbidity" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: 500; color: #6c757d;">☁️ 濁度 (NTU)</span>
+            </label>
+        </div>
+    </div>
+
     <canvas id="dataChart" data-chart-json="{{ chart_data_json|safe }}"></canvas>
 </div>
 
@@ -260,62 +323,130 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{% static 'realtime/realtime.js' %}"></script>
 <script>
+// 完整的參數配置
+const parameterConfig = {
+    temperature: {
+        label: '溫度 (°C)',
+        borderColor: 'rgb(220, 53, 69)',
+        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+    },
+    ph: {
+        label: '酸鹼值 (pH)',
+        borderColor: 'rgb(13, 110, 253)',
+        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+    },
+    oxygen: {
+        label: '溶氧 (mg/L)',
+        borderColor: 'rgb(25, 135, 84)',
+        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+    },
+    salinity: {
+        label: '鹽度 (PSU)',
+        borderColor: 'rgb(111, 66, 193)',
+        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+    },
+    conductivity: {
+        label: '電導率 (mS/cm)',
+        borderColor: 'rgb(253, 126, 20)',
+        backgroundColor: 'rgba(253, 126, 20, 0.1)',
+    },
+    pressure: {
+        label: '壓力 (dbar)',
+        borderColor: 'rgb(32, 201, 151)',
+        backgroundColor: 'rgba(32, 201, 151, 0.1)',
+    },
+    fluorescence: {
+        label: '螢光值 (µg/L)',
+        borderColor: 'rgb(214, 51, 132)',
+        backgroundColor: 'rgba(214, 51, 132, 0.1)',
+    },
+    turbidity: {
+        label: '濁度 (NTU)',
+        borderColor: 'rgb(108, 117, 125)',
+        backgroundColor: 'rgba(108, 117, 125, 0.1)',
+    }
+};
+
 var chartData = JSON.parse('{{ chart_data_json|escapejs }}');
 var ctx = document.getElementById('dataChart').getContext('2d');
+
+// 創建圖表實例
 window.chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
         labels: chartData.labels,
-        datasets: [{
-            label: '溫度 (°C)',
-            data: chartData.temperature,
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-            yAxisID: 'y',
-        }, {
-            label: '酸鹼值 (pH)',
-            data: chartData.ph,
-            borderColor: 'rgb(54, 162, 235)',
-            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-            yAxisID: 'y1',
-        }, {
-            label: '溶氧 (mg/L)',
-            data: chartData.oxygen,
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-            yAxisID: 'y',
-        }, {
-            label: '鹽度 (PSU)',
-            data: chartData.salinity,
-            borderColor: 'rgb(153, 102, 255)',
-            backgroundColor: 'rgba(153, 102, 255, 0.1)',
-            yAxisID: 'y2',
-        }]
+        datasets: []
     },
     options: {
         responsive: true,
         interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+            }
+        },
         scales: {
+            x: {
+                display: true,
+                title: {
+                    display: true,
+                    text: '時間'
+                }
+            },
             y: {
                 type: 'linear',
                 display: true,
                 position: 'left',
-                title: { display: true, text: '溫度 / 溶氧' }
-            },
-            y1: {
-                type: 'linear',
-                display: true,
-                position: 'right',
-                title: { display: true, text: '酸鹼值' },
-                grid: { drawOnChartArea: false }
-            },
-            y2: {
-                type: 'linear',
-                display: false
             }
         }
     }
 });
+
+// 更新圖表的函數
+function updateChart() {
+    const checkboxes = document.querySelectorAll('.param-checkbox:checked');
+    const datasets = [];
+
+    checkboxes.forEach(checkbox => {
+        const param = checkbox.dataset.param;
+        const config = parameterConfig[param];
+
+        if (config && chartData[param]) {
+            datasets.push({
+                label: config.label,
+                data: chartData[param],
+                borderColor: config.borderColor,
+                backgroundColor: config.backgroundColor,
+                tension: 0.1,
+                borderWidth: 2,
+            });
+        }
+    });
+
+    window.chartInstance.data.datasets = datasets;
+    window.chartInstance.update();
+}
+
+// 監聽 checkbox 變化
+document.querySelectorAll('.param-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateChart);
+
+    // 添加視覺效果
+    checkbox.parentElement.addEventListener('click', function(e) {
+        if (e.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+            updateChart();
+        }
+    });
+});
+
+// 初始化圖表 - 顯示默認選中的參數
+updateChart();
 
 // 初始化 realtime 監控時，把圖表實例傳給它
 if (window.realtimeInit) {

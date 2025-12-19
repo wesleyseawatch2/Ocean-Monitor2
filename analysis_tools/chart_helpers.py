@@ -1,11 +1,15 @@
 """ocean_monitor\analysis_tools\chart_helpers.py 圖表數據轉換工具"""
 
 def prepare_chart_data(readings):
-    """準備圖表數據"""
+    """準備圖表數據 - 包含完整 8 個海洋監測參數"""
     return {
         'labels': [r.timestamp.strftime('%m/%d %H:%M') for r in reversed(readings)],
         'temperature': [float(r.temperature) if r.temperature else None for r in reversed(readings)],
         'ph': [float(r.ph) if r.ph else None for r in reversed(readings)],
         'oxygen': [float(r.oxygen) if r.oxygen else None for r in reversed(readings)],
         'salinity': [float(r.salinity) if r.salinity else None for r in reversed(readings)],
+        'conductivity': [float(r.conductivity) if r.conductivity else None for r in reversed(readings)],
+        'pressure': [float(r.pressure) if r.pressure else None for r in reversed(readings)],
+        'fluorescence': [float(r.fluorescence) if r.fluorescence else None for r in reversed(readings)],
+        'turbidity': [float(r.turbidity) if r.turbidity else None for r in reversed(readings)],
     }
