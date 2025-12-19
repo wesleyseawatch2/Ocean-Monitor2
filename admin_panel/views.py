@@ -255,6 +255,8 @@ def periodic_task_create(request):
     context = {
         'action': '新增',
         'available_tasks': available_tasks,
+        'task': None,  # 新增任務時沒有現有的 task 對象
+        'current_schedule_type': 'interval',  # 預設為時間間隔
     }
 
     return render(request, 'admin_panel/periodic_task_form.html', context)

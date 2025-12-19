@@ -128,7 +128,7 @@
 
     <div class="form-group">
         <label for="name">任務名稱 *</label>
-        <input type="text" id="name" name="name" value="{{ task.name|default:'' }}" required>
+        <input type="text" id="name" name="name" value="{% if task %}{{ task.name }}{% endif %}" required>
         <p class="help-text">為這個定時任務取一個容易識別的名稱</p>
     </div>
 
@@ -137,7 +137,7 @@
         <select id="task" name="task" required>
             <option value="">請選擇任務類型</option>
             {% for task_path, task_name in available_tasks %}
-            <option value="{{ task_path }}" {% if task.task == task_path %}selected{% endif %}>
+            <option value="{{ task_path }}" {% if task and task.task == task_path %}selected{% endif %}>
                 {{ task_name }}
             </option>
             {% endfor %}
@@ -170,15 +170,15 @@
             <div class="form-group">
                 <label for="interval_every">間隔數量</label>
                 <input type="number" id="interval_every" name="interval_every"
-                    value="{{ task.interval.every|default:'5' }}" min="1">
+                    value="{% if task and task.interval %}{{ task.interval.every }}{% else %}5{% endif %}" min="1">
             </div>
             <div class="form-group">
                 <label for="interval_period">單位</label>
                 <select id="interval_period" name="interval_period">
-                    <option value="seconds" {% if task.interval and task.interval.period == 'seconds' %}selected{% endif %}>秒</option>
-                    <option value="minutes" {% if not task.interval or task.interval.period == 'minutes' %}selected{% endif %}>分鐘</option>
-                    <option value="hours" {% if task.interval and task.interval.period == 'hours' %}selected{% endif %}>小時</option>
-                    <option value="days" {% if task.interval and task.interval.period == 'days' %}selected{% endif %}>天</option>
+                    <option value="seconds" {% if task and task.interval and task.interval.period == 'seconds' %}selected{% endif %}>秒</option>
+                    <option value="minutes" {% if not task or not task.interval or task.interval.period == 'minutes' %}selected{% endif %}>分鐘</option>
+                    <option value="hours" {% if task and task.interval and task.interval.period == 'hours' %}selected{% endif %}>小時</option>
+                    <option value="days" {% if task and task.interval and task.interval.period == 'days' %}selected{% endif %}>天</option>
                 </select>
             </div>
         </div>
@@ -192,30 +192,30 @@
             <div class="form-group">
                 <label for="crontab_minute">分鐘 (0-59)</label>
                 <input type="text" id="crontab_minute" name="crontab_minute"
-                    value="{{ task.crontab.minute|default:'0' }}" placeholder="*">
+                    value="{% if task and task.crontab %}{{ task.crontab.minute }}{% else %}0{% endif %}" placeholder="*">
             </div>
             <div class="form-group">
                 <label for="crontab_hour">小時 (0-23)</label>
                 <input type="text" id="crontab_hour" name="crontab_hour"
-                    value="{{ task.crontab.hour|default:'*' }}" placeholder="*">
+                    value="{% if task and task.crontab %}{{ task.crontab.hour }}{% else %}*{% endif %}" placeholder="*">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
                 <label for="crontab_day_of_week">星期 (0-6)</label>
                 <input type="text" id="crontab_day_of_week" name="crontab_day_of_week"
-                    value="{{ task.crontab.day_of_week|default:'*' }}" placeholder="*">
+                    value="{% if task and task.crontab %}{{ task.crontab.day_of_week }}{% else %}*{% endif %}" placeholder="*">
             </div>
             <div class="form-group">
                 <label for="crontab_day_of_month">日期 (1-31)</label>
                 <input type="text" id="crontab_day_of_month" name="crontab_day_of_month"
-                    value="{{ task.crontab.day_of_month|default:'*' }}" placeholder="*">
+                    value="{% if task and task.crontab %}{{ task.crontab.day_of_month }}{% else %}*{% endif %}" placeholder="*">
             </div>
         </div>
         <div class="form-group">
             <label for="crontab_month_of_year">月份 (1-12)</label>
             <input type="text" id="crontab_month_of_year" name="crontab_month_of_year"
-                value="{{ task.crontab.month_of_year|default:'*' }}" placeholder="*">
+                value="{% if task and task.crontab %}{{ task.crontab.month_of_year }}{% else %}*{% endif %}" placeholder="*">
         </div>
         <div class="task-preview">
             <h4>常用 Cron 範例：</h4>
@@ -231,13 +231,13 @@
 
     <div class="form-group">
         <label for="kwargs">任務參數 (JSON 格式，選填)</label>
-        <textarea id="kwargs" name="kwargs" rows="3" placeholder='{"user_id": 123}'>{{ task.kwargs|default:'{}' }}</textarea>
+        <textarea id="kwargs" name="kwargs" rows="3" placeholder='{"user_id": 123}'>{% if task and task.kwargs %}{{ task.kwargs }}{% else %}{}{% endif %}</textarea>
         <p class="help-text">如需傳遞參數給任務，請使用 JSON 格式。例如：{"user_id": 5}</p>
     </div>
 
     <div class="form-group">
         <div class="checkbox-group">
-            <input type="checkbox" id="enabled" name="enabled" {% if task.enabled or action == '新增' %}checked{% endif %}>
+            <input type="checkbox" id="enabled" name="enabled" {% if not task or task.enabled or action == '新增' %}checked{% endif %}>
             <label for="enabled">啟用此任務</label>
         </div>
         <p class="help-text">取消勾選可暫時停用此任務而不刪除</p>
