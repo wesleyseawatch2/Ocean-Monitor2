@@ -79,49 +79,60 @@
                     </div>
                 </div>
 
-                <!-- 平均值卡片 -->
-                {% if report.content.averages %}
-                <div class="stat-card-detail">
-                    <h4>平均值統計</h4>
-                    {% if report.content.averages.temperature %}
-                    <div class="stat-item">
-                        <span class="stat-label">平均溫度：</span>
-                        <span class="stat-value">{{ report.content.averages.temperature|floatformat:2 }}°C</span>
-                    </div>
-                    {% endif %}
-                    {% if report.content.averages.max_temperature %}
-                    <div class="stat-item">
-                        <span class="stat-label">最高溫度：</span>
-                        <span class="stat-value">{{ report.content.averages.max_temperature|floatformat:2 }}°C</span>
-                    </div>
-                    {% endif %}
-                    {% if report.content.averages.min_temperature %}
-                    <div class="stat-item">
-                        <span class="stat-label">最低溫度：</span>
-                        <span class="stat-value">{{ report.content.averages.min_temperature|floatformat:2 }}°C</span>
-                    </div>
-                    {% endif %}
-                    {% if report.content.averages.salinity %}
-                    <div class="stat-item">
-                        <span class="stat-label">平均鹽度：</span>
-                        <span class="stat-value">{{ report.content.averages.salinity|floatformat:4 }}</span>
-                    </div>
-                    {% endif %}
-                    {% if report.content.averages.ph %}
-                    <div class="stat-item">
-                        <span class="stat-label">平均pH值：</span>
-                        <span class="stat-value">{{ report.content.averages.ph|floatformat:2 }}</span>
-                    </div>
-                    {% endif %}
-                    {% if report.content.averages.oxygen %}
-                    <div class="stat-item">
-                        <span class="stat-label">平均溶氧：</span>
-                        <span class="stat-value">{{ report.content.averages.oxygen|floatformat:3 }} mg/L</span>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
             </div>
+
+            <!-- 完整 8 參數統計表格 -->
+            {% if report.content.averages %}
+            <h4 style="margin-top: 30px;">完整監測參數統計</h4>
+            <div style="margin-bottom: 20px;">
+                <button id="scrollLeft" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">◀ 左</button>
+                <button id="scrollRight" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">右 ▶</button>
+            </div>
+            <div id="tableContainer" style="overflow-x: auto; scroll-behavior: smooth; border: 1px solid #e0e0e0; border-radius: 4px;">
+                <table style="min-width: 1400px;">
+                    <thead>
+                        <tr>
+                            <th>參數</th>
+                            <th>溫度 (°C)</th>
+                            <th>酸鹼值</th>
+                            <th>溶氧 (mg/L)</th>
+                            <th>鹽度 (PSU)</th>
+                            <th>電導率 (mS/cm)</th>
+                            <th>壓力 (dbar)</th>
+                            <th>螢光值 (µg/L)</th>
+                            <th>濁度 (NTU)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight: 600;">平均值</td>
+                            <td>{{ report.content.averages.temperature|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.ph|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.oxygen|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.salinity|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.conductivity|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.pressure|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.fluorescence|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.turbidity|floatformat:2|default:"--" }}</td>
+                        </tr>
+                        <tr style="background-color: #fff3cd;">
+                            <td style="font-weight: 600;">最大值</td>
+                            <td>{{ report.content.averages.max_temperature|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.max_ph|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.max_oxygen|floatformat:2|default:"--" }}</td>
+                            <td colspan="5" style="text-align: center; color: #666;">--</td>
+                        </tr>
+                        <tr style="background-color: #d1ecf1;">
+                            <td style="font-weight: 600;">最小值</td>
+                            <td>{{ report.content.averages.min_temperature|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.min_ph|floatformat:2|default:"--" }}</td>
+                            <td>{{ report.content.averages.min_oxygen|floatformat:2|default:"--" }}</td>
+                            <td colspan="5" style="text-align: center; color: #666;">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
 
             <!-- 測站統計表格 -->
             {% if report.content.station_stats %}
@@ -637,5 +648,54 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// 表格橫向滾動功能
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('tableContainer');
+    const scrollLeft = document.getElementById('scrollLeft');
+    const scrollRight = document.getElementById('scrollRight');
+
+    if (container && scrollLeft && scrollRight) {
+        scrollLeft.addEventListener('click', function() {
+            container.scrollLeft -= 300;
+        });
+
+        scrollRight.addEventListener('click', function() {
+            container.scrollLeft += 300;
+        });
+
+        // 觸控拖曳支援
+        let isDown = false;
+        let startX;
+        let scrollLeftStart;
+
+        container.addEventListener('mousedown', function(e) {
+            isDown = true;
+            container.style.cursor = 'grabbing';
+            startX = e.pageX - container.offsetLeft;
+            scrollLeftStart = container.scrollLeft;
+        });
+
+        container.addEventListener('mouseleave', function() {
+            isDown = false;
+            container.style.cursor = 'grab';
+        });
+
+        container.addEventListener('mouseup', function() {
+            isDown = false;
+            container.style.cursor = 'grab';
+        });
+
+        container.addEventListener('mousemove', function(e) {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - container.offsetLeft;
+            const walk = (x - startX) * 2;
+            container.scrollLeft = scrollLeftStart - walk;
+        });
+
+        container.style.cursor = 'grab';
+    }
+});
 </script>
 {% endblock %}

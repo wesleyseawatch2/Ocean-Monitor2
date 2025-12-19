@@ -127,7 +127,7 @@ def generate_daily_statistics():
             'location': station.location
         })
 
-    # 計算平均值和範圍
+    # 計算平均值和範圍 (8個完整參數)
     avg_stats = today_readings.aggregate(
         avg_temperature=Avg('temperature'),
         max_temperature=Max('temperature'),
@@ -135,6 +135,14 @@ def generate_daily_statistics():
         avg_salinity=Avg('salinity'),
         avg_ph=Avg('ph'),
         avg_oxygen=Avg('oxygen'),
+        avg_conductivity=Avg('conductivity'),
+        avg_pressure=Avg('pressure'),
+        avg_fluorescence=Avg('fluorescence'),
+        avg_turbidity=Avg('turbidity'),
+        max_ph=Max('ph'),
+        min_ph=Min('ph'),
+        max_oxygen=Max('oxygen'),
+        min_oxygen=Min('oxygen'),
     )
 
     total_readings = today_readings.count()
@@ -152,7 +160,7 @@ def generate_daily_statistics():
     if avg_stats['avg_salinity']:
         summary_lines.append(f"平均鹽度: {float(avg_stats['avg_salinity']):.4f}")
 
-    # 保存報告到數據庫
+    # 保存報告到數據庫 (包含完整的 8 個參數)
     report = Report.objects.create(
         report_type='daily_statistics',
         title=f'{today} 每日統計報告',
@@ -167,8 +175,16 @@ def generate_daily_statistics():
                 'salinity': float(avg_stats['avg_salinity']) if avg_stats['avg_salinity'] else None,
                 'ph': float(avg_stats['avg_ph']) if avg_stats['avg_ph'] else None,
                 'oxygen': float(avg_stats['avg_oxygen']) if avg_stats['avg_oxygen'] else None,
+                'conductivity': float(avg_stats['avg_conductivity']) if avg_stats['avg_conductivity'] else None,
+                'pressure': float(avg_stats['avg_pressure']) if avg_stats['avg_pressure'] else None,
+                'fluorescence': float(avg_stats['avg_fluorescence']) if avg_stats['avg_fluorescence'] else None,
+                'turbidity': float(avg_stats['avg_turbidity']) if avg_stats['avg_turbidity'] else None,
                 'max_temperature': float(avg_stats['max_temperature']) if avg_stats['max_temperature'] else None,
                 'min_temperature': float(avg_stats['min_temperature']) if avg_stats['min_temperature'] else None,
+                'max_ph': float(avg_stats['max_ph']) if avg_stats['max_ph'] else None,
+                'min_ph': float(avg_stats['min_ph']) if avg_stats['min_ph'] else None,
+                'max_oxygen': float(avg_stats['max_oxygen']) if avg_stats['max_oxygen'] else None,
+                'min_oxygen': float(avg_stats['min_oxygen']) if avg_stats['min_oxygen'] else None,
             }
         },
     )
