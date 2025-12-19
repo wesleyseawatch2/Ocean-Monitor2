@@ -21,7 +21,16 @@ class GeminiInsightService:
             raise ValueError("GEMINI_API_KEY 未設置。請在環境變量或 settings.py 中設置。")
 
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.5-pro')
+        # 使用 gemini-2.0-flash-exp - 更快的響應速度
+        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
+        # 設置生成配置 - 降低延遲
+        self.generation_config = {
+            'temperature': 0.7,
+            'top_p': 0.95,
+            'top_k': 40,
+            'max_output_tokens': 2048,
+        }
 
     def generate_report_insight(self, report):
         """
@@ -40,8 +49,12 @@ class GeminiInsightService:
             # 構建提示詞
             prompt = self._build_prompt(report, report_data)
 
-            # 調用 Gemini API
-            response = self.model.generate_content(prompt)
+            # 調用 Gemini API (使用配置以提高速度)
+            response = self.model.generate_content(
+                prompt,
+                generation_config=self.generation_config,
+                request_options={'timeout': 60}  # 60秒超時
+            )
 
             # 解析響應
             insight = {
@@ -75,7 +88,7 @@ class GeminiInsightService:
     def _build_prompt(self, report, report_data):
         """構建給 Gemini 的提示詞"""
 
-        # 基本提示詞
+        # 基本提示詞 - 要求 Markdown 格式
         base_prompt = """你是一個專業的海洋數據分析專家。請分析以下海洋監測報告,並提供專業的數據洞察和建議。
 
 報告資訊:
@@ -96,7 +109,14 @@ class GeminiInsightService:
 3. **環境評估**: 評估海洋環境的整體健康狀況
 4. **建議事項**: 提供具體的監測建議或需要注意的事項
 
-請用繁體中文回答,保持專業但易懂的語言風格。回答要有條理,使用標題和分段。
+**重要格式要求**:
+- 請用繁體中文回答
+- 使用 Markdown 格式
+- 使用 ## 作為主標題 (例如: ## 數據趨勢分析)
+- 使用 ### 作為副標題
+- 使用 **粗體** 強調重點
+- 使用項目符號列表 (- 或 1. 2. 3.)
+- 保持專業但易懂的語言風格
 """
 
         # 格式化內容

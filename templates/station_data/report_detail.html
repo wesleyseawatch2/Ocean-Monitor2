@@ -155,6 +155,9 @@
     </div>
 </div>
 
+<!-- Marked.js - Markdown Parser -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 <style>
 .report-header {
     border-bottom: 2px solid #e0e0e0;
@@ -353,24 +356,150 @@
 }
 
 #insightText {
-    white-space: pre-wrap;
     font-size: 15px;
     line-height: 1.8;
-}
-
-#insightText h1, #insightText h2, #insightText h3, #insightText h4 {
-    color: #007bff;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
-#insightText strong {
     color: #333;
 }
 
-#insightText ul, #insightText ol {
-    margin-left: 20px;
+#insightText h1 {
+    color: #007bff;
+    font-size: 28px;
+    margin-top: 25px;
     margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+#insightText h2 {
+    color: #007bff;
+    font-size: 24px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+}
+
+#insightText h3 {
+    color: #0056b3;
+    font-size: 20px;
+    margin-top: 18px;
+    margin-bottom: 10px;
+}
+
+#insightText h4 {
+    color: #0056b3;
+    font-size: 18px;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+#insightText p {
+    margin-bottom: 12px;
+}
+
+#insightText strong, #insightText b {
+    color: #333;
+    font-weight: 600;
+}
+
+#insightText em, #insightText i {
+    font-style: italic;
+    color: #555;
+}
+
+#insightText ul, #insightText ol {
+    margin-left: 30px;
+    margin-bottom: 15px;
+    margin-top: 10px;
+}
+
+#insightText li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+#insightText ul {
+    list-style-type: disc;
+}
+
+#insightText ol {
+    list-style-type: decimal;
+}
+
+#insightText ul ul, #insightText ol ul {
+    list-style-type: circle;
+    margin-top: 5px;
+}
+
+#insightText code {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #d63384;
+}
+
+#insightText pre {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    overflow-x: auto;
+    margin-bottom: 15px;
+}
+
+#insightText pre code {
+    background-color: transparent;
+    padding: 0;
+    color: #333;
+}
+
+#insightText blockquote {
+    border-left: 4px solid #007bff;
+    background-color: #f8f9fa;
+    padding: 10px 15px;
+    margin: 15px 0;
+    font-style: italic;
+    color: #555;
+}
+
+#insightText table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+#insightText table th,
+#insightText table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+#insightText table th {
+    background-color: #007bff;
+    color: white;
+    font-weight: 600;
+}
+
+#insightText table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+#insightText hr {
+    border: none;
+    border-top: 2px solid #e0e0e0;
+    margin: 20px 0;
+}
+
+#insightText a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+#insightText a:hover {
+    text-decoration: underline;
 }
 
 @media print {
@@ -451,28 +580,20 @@ function generateInsight(reportId) {
 }
 
 function formatInsightText(text) {
-    // 簡單的 Markdown 樣式轉換
-    let formatted = text;
+    // 使用 marked.js 進行完整的 Markdown 解析
+    // 配置 marked 選項
+    marked.setOptions({
+        breaks: true,        // 將換行符轉換為 <br>
+        gfm: true,          // 啟用 GitHub Flavored Markdown
+        headerIds: true,    // 為標題添加 ID
+        mangle: false,      // 不要混淆電子郵件地址
+        sanitize: false,    // 不進行 HTML 淨化(因為我們信任 AI 生成的內容)
+    });
 
-    // 標題轉換
-    formatted = formatted.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    formatted = formatted.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    formatted = formatted.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    // 解析 Markdown 為 HTML
+    const htmlContent = marked.parse(text);
 
-    // 粗體轉換
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-    // 列表轉換
-    formatted = formatted.replace(/^\* (.*$)/gim, '<li>$1</li>');
-    formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-    // 數字列表轉換
-    formatted = formatted.replace(/^\d+\. (.*$)/gim, '<li>$1</li>');
-
-    // 換行轉換
-    formatted = formatted.replace(/\n/g, '<br>');
-
-    return formatted;
+    return htmlContent;
 }
 
 function deleteReport(reportId) {
