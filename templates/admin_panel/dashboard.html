@@ -51,27 +51,122 @@
 <!-- 最新數據 -->
 <div>
     <h3 style="margin-bottom: 1rem; color: #2c3e50;">最新數據記錄（前10筆）</h3>
-    <table style="width: 100%; border-collapse: collapse; background: white;">
-        <thead>
-            <tr style="background: #f8f9fa;">
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">測站</th>
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">時間</th>
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">溫度</th>
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">鹽度</th>
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">pH值</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for reading in latest_readings %}
-            <tr style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 1rem;">{{ reading.station.station_name }}</td>
-                <td style="padding: 1rem;">{{ reading.timestamp|date:"Y-m-d H:i" }}</td>
-                <td style="padding: 1rem;">{{ reading.temperature|floatformat:2 }}°C</td>
-                <td style="padding: 1rem;">{{ reading.salinity|floatformat:2 }} PSU</td>
-                <td style="padding: 1rem;">{{ reading.ph|floatformat:2 }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <!-- 數據表格容器 -->
+    <div style="position: relative; background: white; border-radius: 8px; overflow: hidden;">
+        <!-- 左右切換按鈕 -->
+        <button id="scrollLeft" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 0 4px 4px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
+            ◀
+        </button>
+        <button id="scrollRight" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 4px 0 0 4px; box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
+            ▶
+        </button>
+
+        <!-- 可滾動的表格 -->
+        <div id="tableContainer" style="overflow-x: auto; scroll-behavior: smooth; padding: 0 2.5rem;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 1200px;">
+                <thead>
+                    <tr style="background: #f8f9fa;">
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">測站</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">時間</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">溫度</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">酸鹼值</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">溶氧</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">鹽度</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">電導率</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">壓力</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">螢光值</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap;">濁度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in latest_readings %}
+                    <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.station.station_name }}</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.timestamp|date:"Y-m-d H:i" }}</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.temperature|floatformat:2|default:"--" }} °C</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.ph|floatformat:2|default:"--" }}</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.oxygen|floatformat:2|default:"--" }} mg/L</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.salinity|floatformat:2|default:"--" }} PSU</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.conductivity|floatformat:2|default:"--" }} mS/cm</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.pressure|floatformat:2|default:"--" }} dbar</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.fluorescence|floatformat:2|default:"--" }} µg/L</td>
+                        <td style="padding: 1rem; white-space: nowrap;">{{ reading.turbidity|floatformat:2|default:"--" }} NTU</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+        提示: 使用左右箭頭按鈕或滑動查看完整數據
+    </p>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('tableContainer');
+    const leftBtn = document.getElementById('scrollLeft');
+    const rightBtn = document.getElementById('scrollRight');
+
+    // 左右滾動功能
+    leftBtn.addEventListener('click', function() {
+        container.scrollLeft -= 300;
+    });
+
+    rightBtn.addEventListener('click', function() {
+        container.scrollLeft += 300;
+    });
+
+    // 根據滾動位置顯示/隱藏按鈕
+    function updateButtons() {
+        if (container.scrollLeft <= 0) {
+            leftBtn.style.opacity = '0.3';
+            leftBtn.style.cursor = 'default';
+        } else {
+            leftBtn.style.opacity = '1';
+            leftBtn.style.cursor = 'pointer';
+        }
+
+        if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 10) {
+            rightBtn.style.opacity = '0.3';
+            rightBtn.style.cursor = 'default';
+        } else {
+            rightBtn.style.opacity = '1';
+            rightBtn.style.cursor = 'pointer';
+        }
+    }
+
+    container.addEventListener('scroll', updateButtons);
+    updateButtons();
+
+    // 支持觸控滑動
+    let isDown = false;
+    let startX;
+    let scrollLeftStart;
+
+    container.addEventListener('mousedown', (e) => {
+        isDown = true;
+        startX = e.pageX - container.offsetLeft;
+        scrollLeftStart = container.scrollLeft;
+    });
+
+    container.addEventListener('mouseleave', () => {
+        isDown = false;
+    });
+
+    container.addEventListener('mouseup', () => {
+        isDown = false;
+    });
+
+    container.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - container.offsetLeft;
+        const walk = (x - startX) * 2;
+        container.scrollLeft = scrollLeftStart - walk;
+    });
+});
+</script>
 {% endblock %}
