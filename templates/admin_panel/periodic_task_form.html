@@ -175,10 +175,10 @@
             <div class="form-group">
                 <label for="interval_period">單位</label>
                 <select id="interval_period" name="interval_period">
-                    <option value="seconds" {% if task.interval.period == 'seconds' %}selected{% endif %}>秒</option>
-                    <option value="minutes" {% if task.interval.period == 'minutes' or not task.interval %}selected{% endif %}>分鐘</option>
-                    <option value="hours" {% if task.interval.period == 'hours' %}selected{% endif %}>小時</option>
-                    <option value="days" {% if task.interval.period == 'days' %}selected{% endif %}>天</option>
+                    <option value="seconds" {% if task.interval and task.interval.period == 'seconds' %}selected{% endif %}>秒</option>
+                    <option value="minutes" {% if not task.interval or task.interval.period == 'minutes' %}selected{% endif %}>分鐘</option>
+                    <option value="hours" {% if task.interval and task.interval.period == 'hours' %}selected{% endif %}>小時</option>
+                    <option value="days" {% if task.interval and task.interval.period == 'days' %}selected{% endif %}>天</option>
                 </select>
             </div>
         </div>
