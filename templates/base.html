@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}海洋監測系統{% endblock %}</title>
 
-    <!-- Driver.js for Tour Guide -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <!-- Shepherd.js for Tour Guide -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>
 
     {% block extra_head %}{% endblock %}
     <style>
@@ -308,6 +308,56 @@
         .stat-box h3 { color: #1976d2; font-size: 1.8rem; }
         .stat-box p { color: #666; margin-top: 0.5rem; }
 
+        /* Shepherd.js 自定義樣式 */
+        .shepherd-modal-overlay-container {
+            z-index: 9998;
+        }
+
+        .shepherd-element {
+            z-index: 9999;
+            max-width: 400px;
+        }
+
+        .shepherd-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .shepherd-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .shepherd-button-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .shepherd-button-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .shepherd-button-secondary {
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .shepherd-button-secondary:hover {
+            background: #e0e0e0;
+        }
+
         {% block extra_css %}{% endblock %}
     </style>
 </head>
@@ -349,8 +399,200 @@
     </div>
 
     <!-- Tour Guide Script -->
-    {% load static %}
-    <script src="{% static 'js/tour-guide.js' %}"></script>
+    <script>
+// 測站列表導覽配置
+function getStationListTourSteps() {
+    return [
+        {
+            id: 'welcome',
+            text: '這裡顯示所有海洋監測測站的資訊和位置。讓我們一起了解如何使用這個頁面！',
+            title: '歡迎使用測站列表 📍'
+        },
+        {
+            id: 'stations-grid',
+            text: '每個卡片代表一個測站，顯示測站名稱、設備型號、裝設日期和位置資訊。',
+            attachTo: {
+                element: '.stations-grid',
+                on: 'top'
+            },
+            title: '測站卡片'
+        },
+        {
+            id: 'detail-btn',
+            text: '點擊此按鈕可以查看該測站的完整監測數據、統計圖表和 GPS 軌跡。',
+            attachTo: {
+                element: '.btn-detail',
+                on: 'top'
+            },
+            title: '查看詳細數據'
+        }
+    ];
+}
+
+// 測站詳情導覽配置
+function getStationDetailTourSteps() {
+    return [
+        {
+            id: 'welcome',
+            text: '這裡顯示測站的完整監測數據和分析圖表。讓我帶您了解各個功能！',
+            title: '測站詳情頁面 🌡️'
+        },
+        {
+            id: 'chart',
+            text: '互動式圖表顯示各項參數隨時間的變化趨勢。您可以勾選/取消勾選圖例來顯示/隱藏不同參數。',
+            attachTo: {
+                element: 'canvas#dataChart',
+                on: 'top'
+            },
+            title: '數據趨勢圖表'
+        },
+        {
+            id: 'map',
+            text: '顯示儀器的移動軌跡（最新 100 個 GPS 點）。綠色標記是起點，紅色標記是最新位置。',
+            attachTo: {
+                element: '#trajectory-map',
+                on: 'top'
+            },
+            title: 'GPS 軌跡地圖'
+        }
+    ];
+}
+
+// 報告管理導覽配置
+function getReportListTourSteps() {
+    return [
+        {
+            id: 'welcome',
+            text: '管理系統自動生成的各類報告。讓我們看看如何使用這個頁面！',
+            title: '報告管理中心 📊'
+        },
+        {
+            id: 'stats',
+            text: '快速查看不同類型報告的數量統計。',
+            attachTo: {
+                element: '.stat-card',
+                on: 'bottom'
+            },
+            title: '報告統計'
+        },
+        {
+            id: 'filter',
+            text: '選擇報告類型來篩選顯示的報告。',
+            attachTo: {
+                element: '#reportTypeFilter',
+                on: 'bottom'
+            },
+            title: '報告篩選'
+        }
+    ];
+}
+
+// 初始化導覽功能
+function initTourGuide() {
+    if (typeof Shepherd === 'undefined') {
+        console.warn('Shepherd.js 未載入');
+        return null;
+    }
+
+    const currentPath = window.location.pathname;
+    let steps = [];
+
+    if (currentPath.includes('/stations/') && currentPath.match(/\/stations\/\d+\/$/)) {
+        steps = getStationDetailTourSteps();
+    } else if (currentPath.includes('/stations/') && !currentPath.includes('/readings') && !currentPath.includes('/reports')) {
+        steps = getStationListTourSteps();
+    } else if (currentPath.includes('/reports/') && !currentPath.match(/\/reports\/\d+/)) {
+        steps = getReportListTourSteps();
+    }
+
+    if (steps.length === 0) {
+        return null;
+    }
+
+    const tour = new Shepherd.Tour({
+        useModalOverlay: true,
+        defaultStepOptions: {
+            cancelIcon: {
+                enabled: true
+            },
+            classes: 'shepherd-theme-custom',
+            scrollTo: { behavior: 'smooth', block: 'center' }
+        }
+    });
+
+    // 添加步驟
+    steps.forEach((step, index) => {
+        tour.addStep({
+            id: step.id,
+            title: step.title,
+            text: step.text,
+            attachTo: step.attachTo,
+            buttons: [
+                {
+                    text: index > 0 ? '上一步' : '跳過',
+                    action: index > 0 ? tour.back : tour.cancel,
+                    classes: 'shepherd-button-secondary'
+                },
+                {
+                    text: index < steps.length - 1 ? '下一步' : '完成',
+                    action: tour.next,
+                    classes: 'shepherd-button-primary'
+                }
+            ]
+        });
+    });
+
+    // 完成時保存狀態
+    tour.on('complete', () => {
+        localStorage.setItem('tour_completed_' + currentPath, 'true');
+    });
+
+    tour.on('cancel', () => {
+        localStorage.setItem('tour_completed_' + currentPath, 'true');
+    });
+
+    return tour;
+}
+
+// 啟動導覽
+function startTour() {
+    const tour = initTourGuide();
+    if (tour) {
+        tour.start();
+    } else {
+        alert('此頁面暫無導覽教學');
+    }
+}
+
+// 重置導覽狀態
+function resetTourProgress() {
+    const keys = Object.keys(localStorage).filter(key => key.startsWith('tour_completed_'));
+    keys.forEach(key => localStorage.removeItem(key));
+    alert('導覽進度已重置！');
+}
+
+// 導出函數
+window.tourGuide = {
+    start: startTour,
+    reset: resetTourProgress
+};
+
+// 自動啟動導覽
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const currentPath = window.location.pathname;
+        const tourCompleted = localStorage.getItem('tour_completed_' + currentPath);
+        const autoTourDisabled = localStorage.getItem('auto_tour_disabled');
+
+        if (autoTourDisabled !== 'true' && tourCompleted !== 'true') {
+            const tour = initTourGuide();
+            if (tour) {
+                tour.start();
+            }
+        }
+    }, 1000);
+});
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>
