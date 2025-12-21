@@ -75,8 +75,28 @@ def station_detail(request, station_id):
 
 
 def reading_list(request):
+    """數據記錄列表 - 包含 GPS 軌跡地圖"""
     readings = Reading.objects.select_related('station').all()[:100]
-    context = {'readings': readings}
+
+    # 收集所有有 GPS 座標的數據點
+    gps_points = []
+    for reading in readings:
+        if reading.latitude and reading.longitude:
+            gps_points.append({
+                'station_name': reading.station.station_name,
+                'latitude': float(reading.latitude),
+                'longitude': float(reading.longitude),
+                'timestamp': reading.timestamp.isoformat(),
+                'temperature': float(reading.temperature) if reading.temperature else None,
+                'ph': float(reading.ph) if reading.ph else None,
+                'oxygen': float(reading.oxygen) if reading.oxygen else None,
+            })
+
+    context = {
+        'readings': readings,
+        'gps_points': gps_points,
+        'gps_points_json': json.dumps(gps_points),
+    }
     return render(request, 'station_data/reading_list.html', context)
 
 
