@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}海洋監測系統{% endblock %}</title>
+
+    <!-- Driver.js for Tour Guide -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+
     {% block extra_head %}{% endblock %}
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -54,6 +59,23 @@
         nav a:hover {
             background: rgba(255,255,255,0.1);
             transform: translateY(-2px);
+        }
+
+        .tour-btn {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .tour-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
         }
 
         .user-info {
@@ -299,6 +321,9 @@
         </div>
 
         <div class="nav-right">
+            <button onclick="window.tourGuide.start()" class="tour-btn" title="開始導覽教學">
+                ❓ 教學
+            </button>
             {% if user.is_authenticated %}
                 <span class="user-info">歡迎, {{ user.username }}</span>
                 <a href="{% url 'account_logout' %}">登出</a>
@@ -322,6 +347,10 @@
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Tour Guide Script -->
+    {% load static %}
+    <script src="{% static 'js/tour-guide.js' %}"></script>
 
     {% block extra_js %}{% endblock %}
 </body>

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}導覽設定 - 海洋監測系統{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>🎓 導覽教學設定</h2>
+
+    <div style="margin-bottom: 2rem;">
+        <p style="color: #666; margin-bottom: 1rem;">
+            管理網頁導覽教學的顯示偏好設定
+        </p>
+    </div>
+
+    <div class="settings-section">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: #2c3e50;">自動導覽</h3>
+
+        <div class="setting-item">
+            <label class="switch">
+                <input type="checkbox" id="autoTourToggle" onchange="handleAutoTourToggle(this)">
+                <span class="slider"></span>
+            </label>
+            <div class="setting-info">
+                <strong>首次訪問時自動啟動導覽</strong>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">
+                    當您第一次訪問某個頁面時，系統會自動啟動互動式導覽教學。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section" style="margin-top: 2rem;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: #2c3e50;">導覽進度</h3>
+
+        <div class="progress-info">
+            <p style="margin-bottom: 1rem;">
+                您已完成以下頁面的導覽教學：
+            </p>
+            <ul id="completedTours" style="list-style: none; padding: 0;">
+                <!-- JavaScript 動態填充 -->
+            </ul>
+        </div>
+
+        <button onclick="resetAllTours()" class="btn btn-warning" style="margin-top: 1rem;">
+            重置所有導覽進度
+        </button>
+    </div>
+
+    <div class="settings-section" style="margin-top: 2rem;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: #2c3e50;">快速啟動</h3>
+
+        <p style="color: #666; margin-bottom: 1rem;">
+            點擊導航欄右上角的「❓ 教學」按鈕可以隨時重新啟動當前頁面的導覽教學。
+        </p>
+    </div>
+</div>
+
+<style>
+.settings-section {
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.setting-info {
+    flex: 1;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #667eea;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-warning {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #e67e22;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+}
+
+.progress-info ul li {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #e8f5e9;
+    border-left: 3px solid #4caf50;
+    border-radius: 4px;
+}
+</style>
+
+<script>
+// 載入當前設定
+document.addEventListener('DOMContentLoaded', function() {
+    // 檢查自動導覽設定
+    const autoTourDisabled = localStorage.getItem('auto_tour_disabled');
+    const toggle = document.getElementById('autoTourToggle');
+    toggle.checked = autoTourDisabled !== 'true';
+
+    // 顯示已完成的導覽
+    loadCompletedTours();
+});
+
+function handleAutoTourToggle(checkbox) {
+    if (checkbox.checked) {
+        localStorage.removeItem('auto_tour_disabled');
+        alert('已啟用自動導覽！首次訪問頁面時將自動顯示導覽教學。');
+    } else {
+        localStorage.setItem('auto_tour_disabled', 'true');
+        alert('已禁用自動導覽。您仍可以點擊「❓ 教學」按鈕手動啟動導覽。');
+    }
+}
+
+function loadCompletedTours() {
+    const keys = Object.keys(localStorage).filter(key => key.startsWith('tour_completed_'));
+    const completedList = document.getElementById('completedTours');
+
+    if (keys.length === 0) {
+        completedList.innerHTML = '<li style="background: #fff3cd; border-left-color: #ffc107;">尚未完成任何導覽教學</li>';
+        return;
+    }
+
+    const pageNames = {
+        '/': '首頁',
+        '/stations/': '測站列表',
+        '/stations/readings/': '數據記錄',
+        '/stations/reports/': '報告管理'
+    };
+
+    completedList.innerHTML = keys.map(key => {
+        const path = key.replace('tour_completed_', '');
+        const pageName = pageNames[path] || path;
+        return `<li>✓ ${pageName}</li>`;
+    }).join('');
+}
+
+function resetAllTours() {
+    if (!confirm('確定要重置所有導覽進度嗎？下次訪問時將再次顯示導覽教學。')) {
+        return;
+    }
+
+    const keys = Object.keys(localStorage).filter(key => key.startsWith('tour_completed_'));
+    keys.forEach(key => localStorage.removeItem(key));
+
+    alert('導覽進度已重置！');
+    loadCompletedTours();
+}
+</script>
+{% endblock %}
