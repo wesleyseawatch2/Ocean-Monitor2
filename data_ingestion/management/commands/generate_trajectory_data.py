@@ -41,21 +41,23 @@ class Command(BaseCommand):
             self.stdout.write('請先在管理後台創建測站')
             return
 
-        # 自動為沒有經緯度的測站設置海上初始座標（潮境公園外海）
-        # 潮境公園座標: 121.7813°E, 25.1365°N
-        # 外海區域: 往東北方向偏移到海上
+        # 自動為沒有經緯度的測站設置海上初始座標
+        # 指定海域範圍: 緯度 25.115° ~ 25.170°, 經度 121.833° ~ 121.923°
         stations_updated = 0
         for station in stations:
             if not station.latitude or not station.longitude:
-                # 潮境公園東北外海區域（約 2-3 公里外的海上）
-                station.latitude = Decimal('25.1550')  # 往北偏移約 2 公里
-                station.longitude = Decimal('121.8050')  # 往東偏移約 2 公里
+                # 在指定海域範圍內隨機選擇起始點
+                station.latitude = Decimal(str(round(random.uniform(25.115, 25.170), 6)))
+                station.longitude = Decimal(str(round(random.uniform(121.833, 121.923), 6)))
                 station.save()
                 stations_updated += 1
-                self.stdout.write(self.style.SUCCESS(f'已為測站 "{station.station_name}" 設置潮境公園外海座標'))
+                self.stdout.write(self.style.SUCCESS(
+                    f'已為測站 "{station.station_name}" 設置海上座標: '
+                    f'{station.latitude}°N, {station.longitude}°E'
+                ))
 
         if stations_updated > 0:
-            self.stdout.write(f'\n已更新 {stations_updated} 個測站的座標為潮境公園外海位置\n')
+            self.stdout.write(f'\n已更新 {stations_updated} 個測站的座標\n')
 
         # 設定時間範圍
         start_date = datetime(2025, 12, 14, 0, 0, 0, tzinfo=taipei_tz)
@@ -83,21 +85,45 @@ class Command(BaseCommand):
             current_lat = float(station.latitude)
             current_lng = float(station.longitude)
 
+            # 模擬主要洋流方向（東北向，帶有隨機擾動）
+            # 這會產生更連貫的漂移軌跡
+            drift_direction_lat = random.uniform(0.00005, 0.00015)  # 主要向北漂移
+            drift_direction_lng = random.uniform(0.00005, 0.00015)  # 主要向東漂移
+
             while current_time <= end_date:
-                # 生成 GPS 漂移（模擬海流和儀器緩慢漂移）
-                # 每 10 分鐘移動約 10-30 米（0.0001-0.0003 度）
-                lat_drift = random.uniform(-0.0003, 0.0003)  # 約 30 米
-                lng_drift = random.uniform(-0.0003, 0.0003)  # 約 30 米
+                # 生成連貫的 GPS 漂移（模擬洋流帶動儀器緩慢移動）
+                # 主要漂移方向 + 隨機擾動
+                lat_drift = drift_direction_lat + random.uniform(-0.00005, 0.00005)
+                lng_drift = drift_direction_lng + random.uniform(-0.00005, 0.00005)
+
                 current_lat += lat_drift
                 current_lng += lng_drift
 
-                # 限制漂移範圍不超過基礎位置 ±0.01 度（約 1.1 公里）
-                # 確保儀器保持在海上區域，不會漂移太遠
-                max_drift = 0.01
-                current_lat = max(min(current_lat, float(station.latitude) + max_drift),
-                                 float(station.latitude) - max_drift)
-                current_lng = max(min(current_lng, float(station.longitude) + max_drift),
-                                 float(station.longitude) - max_drift)
+                # 確保保持在指定海域範圍內
+                # 緯度範圍: 25.115° ~ 25.170°
+                # 經度範圍: 121.833° ~ 121.923°
+                LAT_MIN, LAT_MAX = 25.115, 25.170
+                LNG_MIN, LNG_MAX = 121.833, 121.923
+
+                # 如果超出範圍，反彈回來（模擬儀器遇到邊界後改變方向）
+                if current_lat < LAT_MIN:
+                    current_lat = LAT_MIN + 0.001
+                    drift_direction_lat = abs(drift_direction_lat)  # 改為向北
+                elif current_lat > LAT_MAX:
+                    current_lat = LAT_MAX - 0.001
+                    drift_direction_lat = -abs(drift_direction_lat)  # 改為向南
+
+                if current_lng < LNG_MIN:
+                    current_lng = LNG_MIN + 0.001
+                    drift_direction_lng = abs(drift_direction_lng)  # 改為向東
+                elif current_lng > LNG_MAX:
+                    current_lng = LNG_MAX - 0.001
+                    drift_direction_lng = -abs(drift_direction_lng)  # 改為向西
+
+                # 偶爾改變漂移方向（模擬洋流變化）
+                if random.random() < 0.05:  # 5% 機率改變方向
+                    drift_direction_lat += random.uniform(-0.0001, 0.0001)
+                    drift_direction_lng += random.uniform(-0.0001, 0.0001)
 
                 # 生成環境數據（帶日週期變化）
                 hour = current_time.hour
