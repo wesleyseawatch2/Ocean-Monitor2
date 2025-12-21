@@ -41,19 +41,21 @@ class Command(BaseCommand):
             self.stdout.write('請先在管理後台創建測站')
             return
 
-        # 自動為沒有經緯度的測站設置海上初始座標（基隆外海）
+        # 自動為沒有經緯度的測站設置海上初始座標（潮境公園外海）
+        # 潮境公園座標: 121.7813°E, 25.1365°N
+        # 外海區域: 往東北方向偏移到海上
         stations_updated = 0
         for station in stations:
             if not station.latitude or not station.longitude:
-                # 基隆外海區域（遠離港口的海上區域）
-                station.latitude = Decimal('25.1800')  # 基隆外海北緯
-                station.longitude = Decimal('121.8300')  # 基隆外海東經
+                # 潮境公園東北外海區域（約 2-3 公里外的海上）
+                station.latitude = Decimal('25.1550')  # 往北偏移約 2 公里
+                station.longitude = Decimal('121.8050')  # 往東偏移約 2 公里
                 station.save()
                 stations_updated += 1
-                self.stdout.write(self.style.SUCCESS(f'已為測站 "{station.station_name}" 設置基隆外海座標'))
+                self.stdout.write(self.style.SUCCESS(f'已為測站 "{station.station_name}" 設置潮境公園外海座標'))
 
         if stations_updated > 0:
-            self.stdout.write(f'\n已更新 {stations_updated} 個測站的座標為基隆外海位置\n')
+            self.stdout.write(f'\n已更新 {stations_updated} 個測站的座標為潮境公園外海位置\n')
 
         # 設定時間範圍
         start_date = datetime(2025, 12, 14, 0, 0, 0, tzinfo=taipei_tz)
@@ -131,12 +133,12 @@ class Command(BaseCommand):
                 station_readings += 1
                 current_time += interval
 
-            self.stdout.write(self.style.SUCCESS(f'  ✓ 已生成 {station_readings} 筆數據'))
+            self.stdout.write(self.style.SUCCESS(f'  [OK] 已生成 {station_readings} 筆數據'))
             total_readings += station_readings
 
         # 總結
         self.stdout.write('\n' + '=' * 50)
-        self.stdout.write(self.style.SUCCESS(f'✓ 完成! 總共生成 {total_readings} 筆數據'))
+        self.stdout.write(self.style.SUCCESS(f'[完成] 總共生成 {total_readings} 筆數據'))
         self.stdout.write(f'  平均每測站: {total_readings // stations.count() if stations.count() > 0 else 0} 筆')
 
         # 計算預期數量
