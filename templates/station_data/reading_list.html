@@ -4,13 +4,19 @@
 
 {% block extra_head %}
 <!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="" />
 <style>
     #trajectory-map {
-        height: 500px;
+        height: 600px;
         width: 100%;
+        max-width: 100%;
         border-radius: 8px;
         margin-bottom: 2rem;
+        border: 2px solid #e1e8ed;
+        box-sizing: border-box;
+        overflow: hidden;
     }
     .map-legend {
         background: white;
@@ -33,6 +39,10 @@
         height: 3px;
         margin-right: 8px;
     }
+    /* 修復 Leaflet 可能的樣式問題 */
+    .leaflet-container {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
 </style>
 {% endblock %}
 
@@ -42,7 +52,9 @@
 
     <!-- GPS 軌跡地圖 -->
     {% if gps_points %}
-    <div id="trajectory-map"></div>
+    <div style="width: 100%; max-width: 100%; overflow: hidden; margin-bottom: 2rem;">
+        <div id="trajectory-map"></div>
+    </div>
     {% else %}
     <div style="background: #f8f9fa; padding: 2rem; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
         <p style="color: #6c757d; margin: 0;">
@@ -182,8 +194,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Leaflet JS
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+    script.crossOrigin = '';
     script.onload = function() {
-        initTrajectoryMap();
+        // 延遲執行確保 DOM 和 Leaflet 完全載入
+        setTimeout(initTrajectoryMap, 100);
+    };
+    script.onerror = function() {
+        console.error('無法載入 Leaflet.js');
+        document.getElementById('trajectory-map').innerHTML = '<div style="padding: 2rem; text-align: center; color: #e74c3c;">地圖載入失敗，請重新整理頁面</div>';
     };
     document.head.appendChild(script);
 
@@ -191,15 +210,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const gpsPoints = {{ gps_points_json|safe }};
 
         if (!gpsPoints || gpsPoints.length === 0) {
+            console.warn('沒有 GPS 數據點');
             return;
         }
+
+        console.log(`載入 ${gpsPoints.length} 個 GPS 數據點`);
 
         // 計算地圖中心點
         const avgLat = gpsPoints.reduce((sum, p) => sum + p.latitude, 0) / gpsPoints.length;
         const avgLng = gpsPoints.reduce((sum, p) => sum + p.longitude, 0) / gpsPoints.length;
 
+        console.log(`地圖中心點: ${avgLat}, ${avgLng}`);
+
         // 初始化地圖
-        const map = L.map('trajectory-map').setView([avgLat, avgLng], 13);
+        const map = L.map('trajectory-map', {
+            center: [avgLat, avgLng],
+            zoom: 14,
+            zoomControl: true,
+            scrollWheelZoom: true
+        });
 
         // 使用 OpenStreetMap 圖資
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -308,6 +337,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // 自動調整視圖以顯示所有點
         const bounds = L.latLngBounds(gpsPoints.map(p => [p.latitude, p.longitude]));
         map.fitBounds(bounds, { padding: [50, 50] });
+
+        // 強制重新計算地圖尺寸
+        setTimeout(function() {
+            map.invalidateSize();
+            console.log('地圖尺寸已重新計算');
+        }, 200);
     }
 })();
 {% endif %}
