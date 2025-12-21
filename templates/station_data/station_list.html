@@ -3,15 +3,6 @@
 {% block title %}測站列表 - 海洋監測系統{% endblock %}
 
 {% block content %}
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-<!-- 測站地圖總覽 -->
-<div class="card">
-    <h2>🗺️ 測站位置總覽</h2>
-    <div id="stationsMap" style="height: 400px; border-radius: 8px; border: 2px solid #dee2e6; margin-bottom: 20px;"></div>
-</div>
-
 <div class="card">
     <h2>📍 測站列表</h2>
     <table>
@@ -47,64 +38,4 @@
         </tbody>
     </table>
 </div>
-
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-// 初始化測站總覽地圖
-document.addEventListener('DOMContentLoaded', function() {
-    // 收集所有有座標的測站
-    const stations = [
-        {% for station in stations %}
-        {% if station.latitude and station.longitude %}
-        {
-            id: {{ station.id }},
-            name: "{{ station.station_name }}",
-            location: "{{ station.location }}",
-            lat: parseFloat('{{ station.latitude }}'),
-            lng: parseFloat('{{ station.longitude }}')
-        },
-        {% endif %}
-        {% endfor %}
-    ];
-
-    if (stations.length > 0) {
-        // 計算地圖中心點
-        const avgLat = stations.reduce((sum, s) => sum + s.lat, 0) / stations.length;
-        const avgLng = stations.reduce((sum, s) => sum + s.lng, 0) / stations.length;
-
-        // 創建地圖
-        const map = L.map('stationsMap').setView([avgLat, avgLng], 10);
-
-        // 添加 OpenStreetMap 圖層
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        // 為每個測站添加標記
-        stations.forEach(station => {
-            const marker = L.marker([station.lat, station.lng]).addTo(map);
-            marker.bindPopup(`
-                <b>${station.name}</b><br>
-                ${station.location}<br>
-                <a href="/stations/${station.id}/" style="color: #007bff;">查看詳情 →</a>
-            `);
-        });
-
-        // 調整地圖視野以包含所有標記
-        if (stations.length > 1) {
-            const bounds = L.latLngBounds(stations.map(s => [s.lat, s.lng]));
-            map.fitBounds(bounds, { padding: [50, 50] });
-        }
-    } else {
-        // 如果沒有座標,顯示提示
-        document.getElementById('stationsMap').innerHTML =
-            '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 16px;">' +
-            '尚無測站座標資料,請在管理後台設定測站位置' +
-            '</div>';
-    }
-});
-</script>
 {% endblock %}
