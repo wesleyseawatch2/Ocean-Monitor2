@@ -309,6 +309,15 @@ def report_delete(request, report_id):
     return JsonResponse({'status': 'error', 'message': '無效的請求方法'}, status=400)
 
 
+def report_delete_all(request):
+    """刪除所有報告"""
+    if request.method == 'POST':
+        count = Report.objects.count()
+        Report.objects.all().delete()
+        return JsonResponse({'status': 'success', 'message': f'已刪除 {count} 個報告'})
+    return JsonResponse({'status': 'error', 'message': '無效的請求方法'}, status=400)
+
+
 def report_insight(request, report_id):
     """
     使用 Gemini AI 生成報告洞察
