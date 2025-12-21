@@ -41,18 +41,19 @@ class Command(BaseCommand):
             self.stdout.write('請先在管理後台創建測站')
             return
 
-        # 自動為沒有經緯度的測站設置潮境公園座標
+        # 自動為沒有經緯度的測站設置海上初始座標（基隆外海）
         stations_updated = 0
         for station in stations:
             if not station.latitude or not station.longitude:
-                station.latitude = Decimal('25.1423')  # 潮境公園北緯
-                station.longitude = Decimal('121.8027')  # 潮境公園東經
+                # 基隆外海區域（遠離港口的海上區域）
+                station.latitude = Decimal('25.1800')  # 基隆外海北緯
+                station.longitude = Decimal('121.8300')  # 基隆外海東經
                 station.save()
                 stations_updated += 1
-                self.stdout.write(self.style.SUCCESS(f'已為測站 "{station.station_name}" 設置潮境公園座標'))
+                self.stdout.write(self.style.SUCCESS(f'已為測站 "{station.station_name}" 設置基隆外海座標'))
 
         if stations_updated > 0:
-            self.stdout.write(f'\n已更新 {stations_updated} 個測站的座標為潮境公園位置\n')
+            self.stdout.write(f'\n已更新 {stations_updated} 個測站的座標為基隆外海位置\n')
 
         # 設定時間範圍
         start_date = datetime(2025, 12, 14, 0, 0, 0, tzinfo=taipei_tz)
@@ -81,14 +82,16 @@ class Command(BaseCommand):
             current_lng = float(station.longitude)
 
             while current_time <= end_date:
-                # 生成 GPS 漂移（累積式漂移，模擬真實移動）
-                lat_drift = random.uniform(-0.0005, 0.0005)  # 約 55 米
-                lng_drift = random.uniform(-0.0005, 0.0005)
+                # 生成 GPS 漂移（模擬海流和儀器緩慢漂移）
+                # 每 10 分鐘移動約 10-30 米（0.0001-0.0003 度）
+                lat_drift = random.uniform(-0.0003, 0.0003)  # 約 30 米
+                lng_drift = random.uniform(-0.0003, 0.0003)  # 約 30 米
                 current_lat += lat_drift
                 current_lng += lng_drift
 
-                # 限制漂移範圍不超過基礎位置 ±0.02 度
-                max_drift = 0.02
+                # 限制漂移範圍不超過基礎位置 ±0.01 度（約 1.1 公里）
+                # 確保儀器保持在海上區域，不會漂移太遠
+                max_drift = 0.01
                 current_lat = max(min(current_lat, float(station.latitude) + max_drift),
                                  float(station.latitude) - max_drift)
                 current_lng = max(min(current_lng, float(station.longitude) + max_drift),
