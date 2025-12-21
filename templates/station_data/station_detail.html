@@ -252,23 +252,42 @@ label:hover {
     <canvas id="dataChart" data-chart-json="{{ chart_data_json|safe }}"></canvas>
 </div>
 
-<!-- 數據表格 -->
+<!-- 儀器移動軌跡地圖 -->
+{% if gps_points %}
 <div class="card">
-    <h2>📋 最新數據記錄（最新 50 筆）</h2>
+    <h2>🗺️ 儀器移動軌跡（最新 100 個 GPS 點）</h2>
+    <div style="width: 100%; max-width: 100%; overflow: hidden; margin-bottom: 1rem;">
+        <div id="trajectory-map" style="height: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <h2>🗺️ 儀器移動軌跡</h2>
+    <div style="background: #f8f9fa; padding: 2rem; text-align: center; border-radius: 8px;">
+        <p style="color: #6c757d; margin: 0;">
+            📍 尚無 GPS 軌跡數據。請先為測站設定經緯度並生成數據記錄。
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- 完整數據記錄表格（最新 100 筆）-->
+<div class="card">
+    <h2>📊 完整數據記錄（最新 100 筆）</h2>
 
     <!-- 數據表格容器 -->
     <div style="position: relative; overflow: hidden;">
         <!-- 左右切換按鈕 -->
-        <button id="scrollLeft" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 0 4px 4px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
+        <button id="scrollLeft2" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 0 4px 4px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
             ◀
         </button>
-        <button id="scrollRight" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 4px 0 0 4px; box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
+        <button id="scrollRight2" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.9); border: 1px solid #dee2e6; padding: 1rem 0.5rem; cursor: pointer; border-radius: 4px 0 0 4px; box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
             ▶
         </button>
 
         <!-- 可滾動的表格 -->
-        <div id="tableContainer" style="overflow-x: auto; scroll-behavior: smooth; padding: 0 2.5rem;">
-            <table style="min-width: 1200px;">
+        <div id="tableContainer2" style="overflow-x: auto; scroll-behavior: smooth; padding: 0 2.5rem;">
+            <table style="min-width: 1400px;">
                 <thead>
                     <tr>
                         <th style="white-space: nowrap;">時間</th>
@@ -283,7 +302,7 @@ label:hover {
                     </tr>
                 </thead>
                 <tbody>
-                    {% for reading in readings %}
+                    {% for reading in latest_readings %}
                     <tr>
                         <td style="white-space: nowrap;">{{ reading.timestamp }}</td>
                         <td style="white-space: nowrap;">{{ reading.temperature|floatformat:2|default:"--" }}</td>
@@ -310,70 +329,157 @@ label:hover {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('tableContainer');
-    const leftBtn = document.getElementById('scrollLeft');
-    const rightBtn = document.getElementById('scrollRight');
+    // 完整數據記錄表格的滾動功能
+    const container2 = document.getElementById('tableContainer2');
+    const leftBtn2 = document.getElementById('scrollLeft2');
+    const rightBtn2 = document.getElementById('scrollRight2');
 
-    if (container && leftBtn && rightBtn) {
-        // 左右滾動功能
-        leftBtn.addEventListener('click', function() {
-            container.scrollLeft -= 300;
+    if (container2 && leftBtn2 && rightBtn2) {
+        leftBtn2.addEventListener('click', function() {
+            container2.scrollLeft -= 300;
         });
 
-        rightBtn.addEventListener('click', function() {
-            container.scrollLeft += 300;
+        rightBtn2.addEventListener('click', function() {
+            container2.scrollLeft += 300;
         });
 
-        // 根據滾動位置顯示/隱藏按鈕
-        function updateButtons() {
-            if (container.scrollLeft <= 0) {
-                leftBtn.style.opacity = '0.3';
-                leftBtn.style.cursor = 'default';
+        function updateButtons2() {
+            if (container2.scrollLeft <= 0) {
+                leftBtn2.style.opacity = '0.3';
+                leftBtn2.style.cursor = 'default';
             } else {
-                leftBtn.style.opacity = '1';
-                leftBtn.style.cursor = 'pointer';
+                leftBtn2.style.opacity = '1';
+                leftBtn2.style.cursor = 'pointer';
             }
 
-            if (container.scrollLeft >= container.scrollWidth - container.clientWidth - 10) {
-                rightBtn.style.opacity = '0.3';
-                rightBtn.style.cursor = 'default';
+            if (container2.scrollLeft >= container2.scrollWidth - container2.clientWidth - 10) {
+                rightBtn2.style.opacity = '0.3';
+                rightBtn2.style.cursor = 'default';
             } else {
-                rightBtn.style.opacity = '1';
-                rightBtn.style.cursor = 'pointer';
+                rightBtn2.style.opacity = '1';
+                rightBtn2.style.cursor = 'pointer';
             }
         }
 
-        container.addEventListener('scroll', updateButtons);
-        updateButtons();
+        container2.addEventListener('scroll', updateButtons2);
+        updateButtons2();
 
-        // 支持觸控滑動
-        let isDown = false;
-        let startX;
-        let scrollLeftStart;
+        let isDown2 = false;
+        let startX2;
+        let scrollLeftStart2;
 
-        container.addEventListener('mousedown', (e) => {
-            isDown = true;
-            startX = e.pageX - container.offsetLeft;
-            scrollLeftStart = container.scrollLeft;
+        container2.addEventListener('mousedown', (e) => {
+            isDown2 = true;
+            startX2 = e.pageX - container2.offsetLeft;
+            scrollLeftStart2 = container2.scrollLeft;
         });
 
-        container.addEventListener('mouseleave', () => {
-            isDown = false;
+        container2.addEventListener('mouseleave', () => {
+            isDown2 = false;
         });
 
-        container.addEventListener('mouseup', () => {
-            isDown = false;
+        container2.addEventListener('mouseup', () => {
+            isDown2 = false;
         });
 
-        container.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
+        container2.addEventListener('mousemove', (e) => {
+            if (!isDown2) return;
             e.preventDefault();
-            const x = e.pageX - container.offsetLeft;
-            const walk = (x - startX) * 2;
-            container.scrollLeft = scrollLeftStart - walk;
+            const x = e.pageX - container2.offsetLeft;
+            const walk = (x - startX2) * 2;
+            container2.scrollLeft = scrollLeftStart2 - walk;
         });
     }
 });
+
+// GPS 軌跡地圖初始化 (Leaflet)
+{% if gps_points %}
+document.addEventListener('DOMContentLoaded', function() {
+    const gpsPoints = {{ gps_points_json|safe }};
+
+    if (!gpsPoints || gpsPoints.length === 0) {
+        console.warn('沒有 GPS 數據點');
+        return;
+    }
+
+    console.log(`載入 ${gpsPoints.length} 個 GPS 數據點`);
+
+    // 計算地圖中心點
+    const lats = gpsPoints.map(p => p.latitude);
+    const lngs = gpsPoints.map(p => p.longitude);
+    const avgLat = lats.reduce((a, b) => a + b, 0) / lats.length;
+    const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
+
+    // 初始化 Leaflet 地圖
+    const map = L.map('trajectory-map').setView([avgLat, avgLng], 14);
+
+    // 添加 OpenStreetMap 圖層
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // 創建軌跡線
+    const lineCoordinates = gpsPoints.map(p => [p.latitude, p.longitude]);
+    const polyline = L.polyline(lineCoordinates, {
+        color: '#667eea',
+        weight: 4,
+        opacity: 0.8
+    }).addTo(map);
+
+    // 添加起點和終點標記
+    if (gpsPoints.length > 0) {
+        const firstPoint = gpsPoints[0];
+        const lastPoint = gpsPoints[gpsPoints.length - 1];
+
+        // 起點標記（綠色）
+        L.circleMarker([firstPoint.latitude, firstPoint.longitude], {
+            radius: 8,
+            fillColor: '#28a745',
+            color: '#fff',
+            weight: 2,
+            fillOpacity: 0.9
+        }).bindPopup(`
+            <div style="min-width: 200px;">
+                <div style="color: #28a745; font-weight: 600; margin-bottom: 5px;">🔵 起點</div>
+                <strong>{{ station.station_name }}</strong><br>
+                <small>${new Date(firstPoint.timestamp).toLocaleString('zh-TW')}</small>
+                <hr style="margin: 8px 0;">
+                ${firstPoint.temperature !== null ? `溫度: ${firstPoint.temperature.toFixed(2)}°C<br>` : ''}
+                ${firstPoint.ph !== null ? `pH: ${firstPoint.ph.toFixed(2)}<br>` : ''}
+                ${firstPoint.oxygen !== null ? `溶氧: ${firstPoint.oxygen.toFixed(2)} mg/L<br>` : ''}
+                <small>📍 ${firstPoint.latitude.toFixed(6)}, ${firstPoint.longitude.toFixed(6)}</small>
+            </div>
+        `).addTo(map);
+
+        // 終點標記（紅色）
+        L.circleMarker([lastPoint.latitude, lastPoint.longitude], {
+            radius: 10,
+            fillColor: '#dc3545',
+            color: '#fff',
+            weight: 2,
+            fillOpacity: 0.9
+        }).bindPopup(`
+            <div style="min-width: 200px;">
+                <div style="color: #dc3545; font-weight: 600; margin-bottom: 5px;">🔴 最新位置</div>
+                <strong>{{ station.station_name }}</strong><br>
+                <small>${new Date(lastPoint.timestamp).toLocaleString('zh-TW')}</small>
+                <hr style="margin: 8px 0;">
+                ${lastPoint.temperature !== null ? `溫度: ${lastPoint.temperature.toFixed(2)}°C<br>` : ''}
+                ${lastPoint.ph !== null ? `pH: ${lastPoint.ph.toFixed(2)}<br>` : ''}
+                ${lastPoint.oxygen !== null ? `溶氧: ${lastPoint.oxygen.toFixed(2)} mg/L<br>` : ''}
+                <small>📍 ${lastPoint.latitude.toFixed(6)}, ${lastPoint.longitude.toFixed(6)}</small>
+            </div>
+        `).addTo(map);
+    }
+
+    // 自動調整視圖以顯示所有點
+    const bounds = L.latLngBounds(gpsPoints.map(p => [p.latitude, p.longitude]));
+    map.fitBounds(bounds, { padding: [50, 50] });
+
+    console.log('GPS 軌跡地圖初始化完成');
+});
+{% endif %}
 </script>
 
 <!-- Leaflet JS -->

@@ -2,40 +2,233 @@
 
 {% block title %}測站列表 - 海洋監測系統{% endblock %}
 
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    .stations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    .station-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .station-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .station-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+
+    .station-header h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .station-header p {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+        opacity: 0.95;
+    }
+
+    .station-map {
+        height: 250px;
+        width: 100%;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .station-info {
+        padding: 1.5rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #666;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        color: #333;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    .station-actions {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-detail {
+        flex: 1;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        text-align: center;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-detail:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .no-location {
+        height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5f5;
+        color: #999;
+        font-size: 0.95rem;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .stations-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="card">
     <h2>📍 測站列表</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>測站名稱</th>
-                <th>設備型號</th>
-                <th>裝設地點</th>
-                <th>座標</th>
-                <th>裝設日期</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for station in stations %}
-            <tr>
-                <td>{{ station.station_name }}</td>
-                <td>{{ station.device_model }}</td>
-                <td>{{ station.location }}</td>
-                <td>
-                    {% if station.latitude and station.longitude %}
-                        {{ station.latitude }}, {{ station.longitude }}
-                    {% else %}
-                        <span style="color: #999;">未設定</span>
-                    {% endif %}
-                </td>
-                <td>{{ station.install_date }}</td>
-                <td><a href="{% url 'station_data:station_detail' station.id %}">查看詳情</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" style="text-align:center; color:#999;">尚無測站資料</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    {% if not stations %}
+    <p style="text-align: center; color: #999; padding: 2rem;">尚無測站資料</p>
+    {% else %}
+    <div class="stations-grid">
+        {% for station in stations %}
+        <div class="station-card">
+            <!-- 測站標題 -->
+            <div class="station-header">
+                <h3>🌊 {{ station.station_name }}</h3>
+                <p>設備型號：{{ station.device_model|default:"未設定" }}</p>
+                <p>裝設日期：{{ station.install_date|date:"Y年m月d日" }}</p>
+            </div>
+
+            <!-- 地圖顯示 -->
+            {% if station.latitude and station.longitude %}
+            <div class="station-map" id="map-{{ station.id }}"></div>
+            {% else %}
+            <div class="no-location">
+                📍 尚未設定 GPS 座標
+            </div>
+            {% endif %}
+
+            <!-- 測站資訊 -->
+            <div class="station-info">
+                <div class="info-row">
+                    <span class="info-label">裝設地點</span>
+                    <span class="info-value">{{ station.location|default:"未設定" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">座標位置</span>
+                    <span class="info-value">
+                        {% if station.latitude and station.longitude %}
+                            {{ station.latitude }}, {{ station.longitude }}
+                        {% else %}
+                            <span style="color: #999;">未設定</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">數據筆數</span>
+                    <span class="info-value">{{ station.reading_set.count }} 筆</span>
+                </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="station-actions">
+                <a href="{% url 'station_data:station_detail' station.id %}" class="btn-detail">
+                    查看詳細數據 →
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 為每個有座標的測站初始化地圖
+    {% for station in stations %}
+    {% if station.latitude and station.longitude %}
+    (function() {
+        const mapId = 'map-{{ station.id }}';
+        const lat = {{ station.latitude }};
+        const lng = {{ station.longitude }};
+
+        // 初始化地圖
+        const map = L.map(mapId, {
+            center: [lat, lng],
+            zoom: 13,
+            zoomControl: true,
+            scrollWheelZoom: false,  // 禁用滾輪縮放，避免干擾頁面滾動
+            dragging: true
+        });
+
+        // 添加 OpenStreetMap 圖層
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // 添加測站標記
+        const marker = L.marker([lat, lng], {
+            title: '{{ station.station_name }}'
+        }).addTo(map);
+
+        // 添加彈出視窗
+        marker.bindPopup(`
+            <div style="min-width: 180px;">
+                <strong style="color: #667eea; font-size: 1.1rem;">{{ station.station_name }}</strong><br>
+                <small style="color: #666;">{{ station.location|default:"海上測站" }}</small>
+                <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+                <small>📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
+            </div>
+        `);
+    })();
+    {% endif %}
+    {% endfor %}
+});
+</script>
 {% endblock %}

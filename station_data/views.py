@@ -63,6 +63,28 @@ def station_detail(request, station_id):
 
     chart_data = prepare_chart_data(chart_readings)
 
+    # 獲取該測站的 GPS 軌跡數據（最新 100 筆）
+    latest_gps_readings = station.readings.filter(
+        latitude__isnull=False,
+        longitude__isnull=False
+    ).order_by('-timestamp')[:100]
+
+    # 按時間順序排序以正確顯示軌跡（從舊到新）
+    gps_points = []
+    for reading in reversed(list(latest_gps_readings)):
+        gps_points.append({
+            'station_name': station.station_name,
+            'latitude': float(reading.latitude),
+            'longitude': float(reading.longitude),
+            'timestamp': reading.timestamp.isoformat(),
+            'temperature': float(reading.temperature) if reading.temperature else None,
+            'ph': float(reading.ph) if reading.ph else None,
+            'oxygen': float(reading.oxygen) if reading.oxygen else None,
+        })
+
+    # 獲取該測站最新的 100 筆數據記錄
+    latest_readings = station.readings.order_by('-timestamp')[:100]
+
     context = {
         'station': station,
         'readings': readings,
@@ -70,6 +92,9 @@ def station_detail(request, station_id):
         'total_count': station.readings.count(),
         'chart_data_json': json.dumps(chart_data),
         'time_range': time_range,
+        'gps_points': gps_points,
+        'gps_points_json': json.dumps(gps_points),
+        'latest_readings': latest_readings,
     }
     return render(request, 'station_data/station_detail.html', context)
 
