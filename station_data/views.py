@@ -79,14 +79,15 @@ def reading_list(request):
     # 表格顯示最新 100 筆
     readings = Reading.objects.select_related('station').order_by('-timestamp')[:100]
 
-    # 地圖顯示所有有 GPS 座標的數據點（用於完整軌跡）
-    all_gps_readings = Reading.objects.select_related('station').filter(
+    # 地圖只顯示最新 100 個 GPS 點（更清晰、載入更快）
+    latest_gps_readings = Reading.objects.select_related('station').filter(
         latitude__isnull=False,
         longitude__isnull=False
-    ).order_by('timestamp')  # 按時間順序排序以正確顯示軌跡
+    ).order_by('-timestamp')[:100]  # 最新 100 筆
 
+    # 按時間順序排序以正確顯示軌跡（從舊到新）
     gps_points = []
-    for reading in all_gps_readings:
+    for reading in reversed(list(latest_gps_readings)):  # 反轉順序使最舊的在前
         gps_points.append({
             'station_name': reading.station.station_name,
             'latitude': float(reading.latitude),
