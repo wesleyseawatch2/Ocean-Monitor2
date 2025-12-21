@@ -209,8 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('[WebSocket] 未找到圖表實例');
     }
 
-    // 確保狀態指示器存在
-    if (!document.getElementById('realtime-status')) {
+    // 確保狀態指示器存在（僅在 admin 頁面顯示）
+    const isAdminPage = window.location.pathname.includes('/admin') || window.location.pathname.includes('/panel');
+    if (!document.getElementById('realtime-status') && isAdminPage) {
         const statusHTML = `
             <div id="realtime-status" style="
                 position: fixed;

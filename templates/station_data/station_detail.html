@@ -589,6 +589,47 @@ const parameterConfig = {
 
 var chartData = JSON.parse('{{ chart_data_json|escapejs }}');
 var ctx = document.getElementById('dataChart').getContext('2d');
+var currentTimeRange = '{{ time_range }}' || '24h'; // 追蹤當前時間範圍
+
+// 根據時間範圍獲取 x 軸配置
+function getXAxisConfig(timeRange) {
+    const configs = {
+        '1h': {
+            title: '時間（最近 1 小時）',
+            ticks: { maxTicksLimit: 12 }
+        },
+        '6h': {
+            title: '時間（最近 6 小時）',
+            ticks: { maxTicksLimit: 12 }
+        },
+        '12h': {
+            title: '時間（最近 12 小時）',
+            ticks: { maxTicksLimit: 12 }
+        },
+        '24h': {
+            title: '時間（最近 24 小時）',
+            ticks: { maxTicksLimit: 12 }
+        },
+        '3d': {
+            title: '時間（最近 3 天）',
+            ticks: { maxTicksLimit: 15 }
+        },
+        '7d': {
+            title: '時間（最近 7 天）',
+            ticks: { maxTicksLimit: 14 }
+        },
+        '30d': {
+            title: '時間（最近 30 天）',
+            ticks: { maxTicksLimit: 15 }
+        },
+        'all': {
+            title: '時間（全部數據）',
+            ticks: { maxTicksLimit: 20 }
+        }
+    };
+
+    return configs[timeRange] || configs['24h'];
+}
 
 // 創建圖表實例
 window.chartInstance = new Chart(ctx, {
@@ -615,8 +656,9 @@ window.chartInstance = new Chart(ctx, {
                 display: true,
                 title: {
                     display: true,
-                    text: '時間'
-                }
+                    text: getXAxisConfig(currentTimeRange).title
+                },
+                ticks: getXAxisConfig(currentTimeRange).ticks
             },
             y: {
                 type: 'linear',
@@ -648,7 +690,17 @@ function updateChart() {
         }
     });
 
+    // 更新數據集
     window.chartInstance.data.datasets = datasets;
+
+    // 更新 labels（時間標籤）
+    window.chartInstance.data.labels = chartData.labels;
+
+    // 更新 x 軸配置
+    const xAxisConfig = getXAxisConfig(currentTimeRange);
+    window.chartInstance.options.scales.x.title.text = xAxisConfig.title;
+    window.chartInstance.options.scales.x.ticks = xAxisConfig.ticks;
+
     window.chartInstance.update();
 }
 
@@ -670,6 +722,9 @@ updateChart();
 
 // 時間範圍切換函數 - 使用 AJAX 不重新載入頁面
 function changeTimeRange(range) {
+    // 更新當前時間範圍
+    currentTimeRange = range;
+
     // 更新按鈕狀態
     document.querySelectorAll('.time-range-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -689,7 +744,7 @@ function changeTimeRange(range) {
                 // 更新全局 chartData
                 chartData = data.chart_data;
 
-                // 更新圖表
+                // 更新圖表（會自動使用新的 currentTimeRange 更新 x 軸配置）
                 updateChart();
 
                 // 恢復透明度
