@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 import random
-import pytz
+from zoneinfo import ZoneInfo
 
 from data_ingestion.models import Station, Reading
 
@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # 設定台灣時區
-        taipei_tz = pytz.timezone('Asia/Taipei')
+        taipei_tz = ZoneInfo('Asia/Taipei')
 
         # 清空現有數據
         if options['clear']:
@@ -42,8 +42,8 @@ class Command(BaseCommand):
             return
 
         # 設定時間範圍
-        start_date = taipei_tz.localize(datetime(2025, 12, 14, 0, 0, 0))
-        end_date = taipei_tz.localize(datetime(2025, 12, 21, 23, 59, 59))
+        start_date = datetime(2025, 12, 14, 0, 0, 0, tzinfo=taipei_tz)
+        end_date = datetime(2025, 12, 21, 23, 59, 59, tzinfo=taipei_tz)
         interval = timedelta(minutes=10)
 
         self.stdout.write(f'\n開始生成數據:')
