@@ -364,15 +364,15 @@
 <body>
     <nav>
         <div class="nav-left">
-            <h1>🌊 海洋監測系統</h1>
+            <h1>海洋監測系統</h1>
             <a href="{% url 'station_data:station_list' %}">測站列表</a>
             <a href="{% url 'station_data:reading_list' %}">數據記錄</a>
-            <a href="{% url 'station_data:report_list' %}">📊 報告管理</a>
+            <a href="{% url 'station_data:report_list' %}">報告管理</a>
         </div>
 
         <div class="nav-right">
             <button onclick="window.tourGuide.start()" class="tour-btn" title="開始導覽教學">
-                ❓ 教學
+                教學
             </button>
             {% if user.is_authenticated %}
                 <span class="user-info">歡迎, {{ user.username }}</span>
@@ -406,7 +406,7 @@ function getStationListTourSteps() {
         {
             id: 'welcome',
             text: '這裡顯示所有海洋監測測站的資訊和位置。讓我們一起了解如何使用這個頁面！',
-            title: '歡迎使用測站列表 📍'
+            title: '歡迎使用測站列表'
         },
         {
             id: 'stations-grid',
@@ -435,7 +435,7 @@ function getStationDetailTourSteps() {
         {
             id: 'welcome',
             text: '這裡顯示測站的完整監測數據和分析圖表。讓我帶您了解各個功能！',
-            title: '測站詳情頁面 🌡️'
+            title: '測站詳情頁面'
         },
         {
             id: 'chart',
@@ -464,7 +464,7 @@ function getReportListTourSteps() {
         {
             id: 'welcome',
             text: '管理系統自動生成的各類報告。讓我們看看如何使用這個頁面！',
-            title: '報告管理中心 📊'
+            title: '報告管理中心'
         },
         {
             id: 'stats',

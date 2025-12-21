@@ -59,7 +59,7 @@ label:hover {
 </style>
 
 <div class="card">
-    <h2>🌊 {{ station.station_name }}</h2>
+    <h2>{{ station.station_name }}</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
         <div>
             <p><strong>設備型號：</strong>{{ station.device_model }}</p>
@@ -67,7 +67,7 @@ label:hover {
             <p><strong>裝設日期：</strong>{{ station.install_date }}</p>
             <p><strong>數據筆數：</strong><span id="total-reading-count">{{ total_count }}</span> 筆</p>
             {% if station.latitude and station.longitude %}
-            <p><strong>📍 座標位置：</strong>{{ station.latitude }}, {{ station.longitude }}</p>
+            <p><strong>座標位置：</strong>{{ station.latitude }}, {{ station.longitude }}</p>
             {% endif %}
         </div>
         {% if station.latitude and station.longitude %}
@@ -125,7 +125,7 @@ label:hover {
 
 <!-- 數據統計卡片 -->
 <div class="card stats-card">
-    <h2>📊 數據統計</h2>
+    <h2>數據統計</h2>
     <h3>溫度 (°C)</h3>
     <div class="stat-row">
         <div class="stat-value">
@@ -193,11 +193,11 @@ label:hover {
 
 <!-- 數據趨勢圖 -->
 <div class="card">
-    <h2>📈 數據趨勢圖</h2>
+    <h2>數據趨勢圖</h2>
 
     <!-- 時間範圍選擇器 -->
     <div style="margin-bottom: 15px; padding: 15px; background-color: #fff3cd; border-radius: 8px; border: 2px solid #ffc107;">
-        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">⏱️ 選擇時間範圍:</h3>
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">選擇時間範圍:</h3>
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
             <button class="time-range-btn {% if time_range == '1h' %}active{% endif %}" data-range="1h" onclick="changeTimeRange('1h')">最近 1 小時</button>
             <button class="time-range-btn {% if time_range == '6h' %}active{% endif %}" data-range="6h" onclick="changeTimeRange('6h')">最近 6 小時</button>
@@ -212,39 +212,39 @@ label:hover {
 
     <!-- 參數選擇器 -->
     <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
-        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">📊 選擇顯示參數:</h3>
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #495057;">選擇顯示參數:</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="temperature" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #dc3545;">🌡️ 溫度 (°C)</span>
+                <span style="font-weight: 500; color: #dc3545;">溫度 (°C)</span>
             </label>
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="ph" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #0d6efd;">⚗️ 酸鹼值 (pH)</span>
+                <span style="font-weight: 500; color: #0d6efd;">酸鹼值 (pH)</span>
             </label>
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="oxygen" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #198754;">💨 溶氧 (mg/L)</span>
+                <span style="font-weight: 500; color: #198754;">溶氧 (mg/L)</span>
             </label>
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="salinity" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #6f42c1;">🧂 鹽度 (PSU)</span>
+                <span style="font-weight: 500; color: #6f42c1;">鹽度 (PSU)</span>
             </label>
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="conductivity" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #fd7e14;">⚡ 電導率 (mS/cm)</span>
+                <span style="font-weight: 500; color: #fd7e14;">電導率 (mS/cm)</span>
             </label>
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="pressure" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #20c997;">📊 壓力 (dbar)</span>
+                <span style="font-weight: 500; color: #20c997;">壓力 (dbar)</span>
             </label>
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="fluorescence" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #d63384;">🌟 螢光值 (µg/L)</span>
+                <span style="font-weight: 500; color: #d63384;">螢光值 (µg/L)</span>
             </label>
             <label style="display: flex; align-items: center; cursor: pointer; padding: 8px; background: white; border-radius: 4px; border: 2px solid #dee2e6; transition: all 0.2s;">
                 <input type="checkbox" class="param-checkbox" data-param="turbidity" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                <span style="font-weight: 500; color: #6c757d;">☁️ 濁度 (NTU)</span>
+                <span style="font-weight: 500; color: #6c757d;">濁度 (NTU)</span>
             </label>
         </div>
     </div>
@@ -255,17 +255,17 @@ label:hover {
 <!-- 儀器移動軌跡地圖 -->
 {% if gps_points %}
 <div class="card">
-    <h2>🗺️ 儀器移動軌跡（最新 100 個 GPS 點）</h2>
+    <h2>儀器移動軌跡（最新 100 個 GPS 點）</h2>
     <div style="width: 100%; max-width: 100%; overflow: hidden; margin-bottom: 1rem;">
         <div id="trajectory-map" style="height: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
     </div>
 </div>
 {% else %}
 <div class="card">
-    <h2>🗺️ 儀器移動軌跡</h2>
+    <h2>儀器移動軌跡</h2>
     <div style="background: #f8f9fa; padding: 2rem; text-align: center; border-radius: 8px;">
         <p style="color: #6c757d; margin: 0;">
-            📍 尚無 GPS 軌跡數據。請先為測站設定經緯度並生成數據記錄。
+            尚無 GPS 軌跡數據。請先為測站設定經緯度並生成數據記錄。
         </p>
     </div>
 </div>
@@ -273,7 +273,7 @@ label:hover {
 
 <!-- 完整數據記錄表格（最新 100 筆）-->
 <div class="card">
-    <h2>📊 完整數據記錄（最新 100 筆）</h2>
+    <h2>完整數據記錄（最新 100 筆）</h2>
 
     <!-- 數據表格容器 -->
     <div style="position: relative; overflow: hidden;">
@@ -301,7 +301,7 @@ label:hover {
                         <th style="white-space: nowrap;">濁度 (NTU)</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="latest-readings-tbody">
                     {% for reading in latest_readings %}
                     <tr>
                         <td style="white-space: nowrap;">{{ reading.timestamp }}</td>
@@ -390,6 +390,36 @@ document.addEventListener('DOMContentLoaded', function() {
             container2.scrollLeft = scrollLeftStart2 - walk;
         });
     }
+
+    // 定期刷新最新數據記錄表格（每 30 秒）
+    function refreshLatestReadings() {
+        const stationId = '{{ station.id }}';
+        const tbody = document.getElementById('latest-readings-tbody');
+
+        if (!tbody) return;
+
+        fetch('/stations/' + stationId + '/')
+            .then(response => response.text())
+            .then(html => {
+                // 解析返回的 HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTbody = doc.getElementById('latest-readings-tbody');
+
+                if (newTbody) {
+                    // 更新表格內容
+                    tbody.innerHTML = newTbody.innerHTML;
+                    console.log('[刷新] 最新數據記錄已更新');
+                }
+            })
+            .catch(error => {
+                console.error('[刷新] 更新失敗:', error);
+            });
+    }
+
+    // 每 30 秒自動刷新一次
+    setInterval(refreshLatestReadings, 30000);
+    console.log('[刷新] 定期刷新已啟動（每 30 秒）');
 });
 
 // GPS 軌跡地圖初始化 (Leaflet)
@@ -441,14 +471,14 @@ document.addEventListener('DOMContentLoaded', function() {
             fillOpacity: 0.9
         }).bindPopup(`
             <div style="min-width: 200px;">
-                <div style="color: #28a745; font-weight: 600; margin-bottom: 5px;">🔵 起點</div>
+                <div style="color: #28a745; font-weight: 600; margin-bottom: 5px;">起點</div>
                 <strong>{{ station.station_name }}</strong><br>
                 <small>${new Date(firstPoint.timestamp).toLocaleString('zh-TW')}</small>
                 <hr style="margin: 8px 0;">
                 ${firstPoint.temperature !== null ? `溫度: ${firstPoint.temperature.toFixed(2)}°C<br>` : ''}
                 ${firstPoint.ph !== null ? `pH: ${firstPoint.ph.toFixed(2)}<br>` : ''}
                 ${firstPoint.oxygen !== null ? `溶氧: ${firstPoint.oxygen.toFixed(2)} mg/L<br>` : ''}
-                <small>📍 ${firstPoint.latitude.toFixed(6)}, ${firstPoint.longitude.toFixed(6)}</small>
+                <small>${firstPoint.latitude.toFixed(6)}, ${firstPoint.longitude.toFixed(6)}</small>
             </div>
         `).addTo(map);
 
@@ -461,14 +491,14 @@ document.addEventListener('DOMContentLoaded', function() {
             fillOpacity: 0.9
         }).bindPopup(`
             <div style="min-width: 200px;">
-                <div style="color: #dc3545; font-weight: 600; margin-bottom: 5px;">🔴 最新位置</div>
+                <div style="color: #dc3545; font-weight: 600; margin-bottom: 5px;">最新位置</div>
                 <strong>{{ station.station_name }}</strong><br>
                 <small>${new Date(lastPoint.timestamp).toLocaleString('zh-TW')}</small>
                 <hr style="margin: 8px 0;">
                 ${lastPoint.temperature !== null ? `溫度: ${lastPoint.temperature.toFixed(2)}°C<br>` : ''}
                 ${lastPoint.ph !== null ? `pH: ${lastPoint.ph.toFixed(2)}<br>` : ''}
                 ${lastPoint.oxygen !== null ? `溶氧: ${lastPoint.oxygen.toFixed(2)} mg/L<br>` : ''}
-                <small>📍 ${lastPoint.latitude.toFixed(6)}, ${lastPoint.longitude.toFixed(6)}</small>
+                <small>${lastPoint.latitude.toFixed(6)}, ${lastPoint.longitude.toFixed(6)}</small>
             </div>
         `).addTo(map);
     }

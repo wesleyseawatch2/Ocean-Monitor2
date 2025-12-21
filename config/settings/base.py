@@ -138,8 +138,9 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # 允許使用 username 或 em
 ACCOUNT_EMAIL_REQUIRED = True  # 註冊時必須填寫 email
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # email 驗證為選填 (可改為 'mandatory' 強制驗證)
 ACCOUNT_USERNAME_REQUIRED = False  # 社交登入不需要 username，使用 email 即可
-LOGIN_REDIRECT_URL = '/login/'  # 預設登入後導向 (會被 adapter 覆寫)
-LOGOUT_REDIRECT_URL = '/login/'  # 登出後導向登入頁
+LOGIN_URL = '/accounts/login/'  # 未登入時導向登入頁
+LOGIN_REDIRECT_URL = '/stations/'  # 登入後導向測站列表頁
+LOGOUT_REDIRECT_URL = '/accounts/login/'  # 登出後導向登入頁
 
 # 社交登入設定
 SOCIALACCOUNT_AUTO_SIGNUP = True  # 使用社交登入時自動建立帳號

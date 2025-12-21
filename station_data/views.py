@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import StreamingHttpResponse, JsonResponse
 from django.views.decorators.http import condition
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from data_ingestion.models import Station, Reading
 from station_data.models import Report
 from analysis_tools.calculations import calculate_statistics
@@ -11,12 +12,14 @@ from analysis_tools.chart_helpers import prepare_chart_data
 import time
 
 
+@login_required
 def station_list(request):
     stations = Station.objects.all()
     context = {'stations': stations}
     return render(request, 'station_data/station_list.html', context)
 
 
+@login_required
 def station_detail(request, station_id):
     from django.utils import timezone
     from datetime import timedelta
@@ -99,6 +102,7 @@ def station_detail(request, station_id):
     return render(request, 'station_data/station_detail.html', context)
 
 
+@login_required
 def reading_list(request):
     """數據記錄列表 - 包含 GPS 軌跡地圖"""
     # 表格顯示最新 100 筆
@@ -131,6 +135,7 @@ def reading_list(request):
     return render(request, 'station_data/reading_list.html', context)
 
 
+@login_required
 def get_chart_data_ajax(request, station_id):
     """AJAX 端點 - 獲取圖表數據"""
     from django.utils import timezone
@@ -172,10 +177,11 @@ def get_chart_data_ajax(request, station_id):
     })
 
 
+@login_required
 def station_detail_realtime(request, station_id):
     """
     實時推送站點數據的端點（使用 Server-Sent Events）
-    
+
     前端可以使用 EventSource 連接此端點，接收實時數據更新
     """
     station = get_object_or_404(Station, pk=station_id)
@@ -255,6 +261,7 @@ def station_detail_realtime(request, station_id):
     return response
 
 
+@login_required
 def report_list(request):
     """報告列表頁面"""
     # 獲取查詢參數
@@ -290,6 +297,7 @@ def report_list(request):
     return render(request, 'station_data/report_list.html', context)
 
 
+@login_required
 def report_detail(request, report_id):
     """報告詳情頁面"""
     report = get_object_or_404(Report, pk=report_id)
@@ -300,6 +308,7 @@ def report_detail(request, report_id):
     return render(request, 'station_data/report_detail.html', context)
 
 
+@login_required
 def report_delete(request, report_id):
     """刪除報告"""
     if request.method == 'POST':
@@ -309,6 +318,7 @@ def report_delete(request, report_id):
     return JsonResponse({'status': 'error', 'message': '無效的請求方法'}, status=400)
 
 
+@login_required
 def report_delete_all(request):
     """刪除所有報告"""
     if request.method == 'POST':
@@ -318,6 +328,7 @@ def report_delete_all(request):
     return JsonResponse({'status': 'error', 'message': '無效的請求方法'}, status=400)
 
 
+@login_required
 def report_insight(request, report_id):
     """
     使用 Gemini AI 生成報告洞察
