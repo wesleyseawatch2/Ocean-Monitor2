@@ -3,25 +3,22 @@
 {% block title %}數據記錄 - 海洋監測系統{% endblock %}
 
 {% block extra_head %}
-<!-- Mapbox GL JS -->
-<link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+<!-- Leaflet CSS & JS - 直接載入避免動態載入問題 -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
     #trajectory-map {
         height: 600px;
         width: 100%;
-        max-width: 100%;
         border-radius: 12px;
         margin-bottom: 2rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        overflow: hidden;
     }
     .map-legend {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
+        background: white;
         padding: 15px;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     .map-legend h4 {
         margin: 0 0 12px 0;
@@ -34,7 +31,6 @@
         align-items: center;
         margin: 8px 0;
         font-size: 13px;
-        color: #34495e;
     }
     .map-legend-color {
         width: 24px;
@@ -42,15 +38,9 @@
         margin-right: 10px;
         border-radius: 2px;
     }
-    /* Mapbox Popup 樣式美化 */
-    .mapboxgl-popup-content {
+    .leaflet-popup-content-wrapper {
         border-radius: 8px;
-        padding: 15px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .mapboxgl-popup-close-button {
-        font-size: 20px;
-        padding: 5px 10px;
     }
 </style>
 {% endblock %}
@@ -196,214 +186,133 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ==========================================
-// GPS 軌跡地圖初始化 (Mapbox GL JS)
+// GPS 軌跡地圖初始化 (Leaflet)
 // ==========================================
 {% if gps_points %}
-(function() {
-    // 載入 Mapbox GL JS
-    const script = document.createElement('script');
-    script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js';
-    script.onload = function() {
-        setTimeout(initTrajectoryMap, 100);
-    };
-    script.onerror = function() {
-        console.error('無法載入 Mapbox GL JS');
-        document.getElementById('trajectory-map').innerHTML =
-            '<div style="padding: 2rem; text-align: center; color: #e74c3c;">地圖載入失敗，請重新整理頁面</div>';
-    };
-    document.head.appendChild(script);
+document.addEventListener('DOMContentLoaded', function() {
+    const gpsPoints = {{ gps_points_json|safe }};
 
-    function initTrajectoryMap() {
-        const gpsPoints = {{ gps_points_json|safe }};
-
-        if (!gpsPoints || gpsPoints.length === 0) {
-            console.warn('沒有 GPS 數據點');
-            return;
-        }
-
-        console.log(`載入 ${gpsPoints.length} 個 GPS 數據點`);
-
-        // 計算地圖中心點和邊界
-        const lats = gpsPoints.map(p => p.latitude);
-        const lngs = gpsPoints.map(p => p.longitude);
-        const avgLat = lats.reduce((a, b) => a + b, 0) / lats.length;
-        const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
-
-        console.log(`地圖中心點: ${avgLat}, ${avgLng}`);
-
-        // 初始化 Mapbox 地圖（使用免費的 OSM 樣式）
-        const map = new mapboxgl.Map({
-            container: 'trajectory-map',
-            style: {
-                version: 8,
-                sources: {
-                    'osm-tiles': {
-                        type: 'raster',
-                        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                        tileSize: 256,
-                        attribution: '© OpenStreetMap contributors'
-                    }
-                },
-                layers: [{
-                    id: 'osm-tiles',
-                    type: 'raster',
-                    source: 'osm-tiles',
-                    minzoom: 0,
-                    maxzoom: 19
-                }]
-            },
-            center: [avgLng, avgLat],
-            zoom: 14,
-            pitch: 0,
-            bearing: 0
-        });
-
-        // 添加導航控制
-        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-        map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
-
-        // 等待地圖載入完成
-        map.on('load', function() {
-            // 按測站分組數據點
-            const stationGroups = {};
-            gpsPoints.forEach(point => {
-                if (!stationGroups[point.station_name]) {
-                    stationGroups[point.station_name] = [];
-                }
-                stationGroups[point.station_name].push(point);
-            });
-
-            // 為每個測站選擇顏色
-            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
-            let colorIndex = 0;
-            const legendData = [];
-
-            // 繪製每個測站的軌跡
-            Object.keys(stationGroups).forEach(stationName => {
-                const points = stationGroups[stationName];
-                const color = colors[colorIndex % colors.length];
-
-                // 按時間排序
-                points.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-                // 創建 GeoJSON 線條
-                const lineCoordinates = points.map(p => [p.longitude, p.latitude]);
-
-                map.addSource(`route-${colorIndex}`, {
-                    type: 'geojson',
-                    data: {
-                        type: 'Feature',
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: lineCoordinates
-                        }
-                    }
-                });
-
-                map.addLayer({
-                    id: `route-${colorIndex}`,
-                    type: 'line',
-                    source: `route-${colorIndex}`,
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round'
-                    },
-                    paint: {
-                        'line-color': color,
-                        'line-width': 4,
-                        'line-opacity': 0.8
-                    }
-                });
-
-                // 添加標記點
-                points.forEach((point, index) => {
-                    const isFirst = index === 0;
-                    const isLast = index === points.length - 1;
-
-                    // 創建標記元素
-                    const el = document.createElement('div');
-                    el.className = 'trajectory-marker';
-                    el.style.backgroundColor = color;
-                    el.style.width = isLast ? '16px' : '10px';
-                    el.style.height = isLast ? '16px' : '10px';
-                    el.style.borderRadius = '50%';
-                    el.style.border = '2px solid white';
-                    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                    el.style.cursor = 'pointer';
-
-                    // Popup 內容
-                    const timestamp = new Date(point.timestamp).toLocaleString('zh-TW');
-                    let popupHTML = `<div style="min-width: 220px; font-family: sans-serif;">`;
-
-                    if (isFirst) {
-                        popupHTML += `<div style="color: ${color}; font-weight: 600; margin-bottom: 8px;">🔵 起點</div>`;
-                    } else if (isLast) {
-                        popupHTML += `<div style="color: ${color}; font-weight: 600; margin-bottom: 8px;">🔴 最新位置</div>`;
-                    }
-
-                    popupHTML += `<strong style="font-size: 15px;">${stationName}</strong><br>`;
-                    popupHTML += `<small style="color: #7f8c8d;">${timestamp}</small><br>`;
-                    popupHTML += `<hr style="margin: 10px 0; border: none; border-top: 1px solid #ecf0f1;">`;
-
-                    if (point.temperature !== null) {
-                        popupHTML += `<div style="margin: 5px 0;">🌡️ 溫度: <strong>${point.temperature.toFixed(2)}°C</strong></div>`;
-                    }
-                    if (point.ph !== null) {
-                        popupHTML += `<div style="margin: 5px 0;">⚗️ pH: <strong>${point.ph.toFixed(2)}</strong></div>`;
-                    }
-                    if (point.oxygen !== null) {
-                        popupHTML += `<div style="margin: 5px 0;">💨 溶氧: <strong>${point.oxygen.toFixed(2)} mg/L</strong></div>`;
-                    }
-
-                    popupHTML += `<small style="color: #95a5a6; margin-top: 8px; display: block;">📍 ${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}</small>`;
-                    popupHTML += `</div>`;
-
-                    new mapboxgl.Marker(el)
-                        .setLngLat([point.longitude, point.latitude])
-                        .setPopup(new mapboxgl.Popup({ offset: 15 }).setHTML(popupHTML))
-                        .addTo(map);
-                });
-
-                legendData.push({ name: stationName, color: color, count: points.length });
-                colorIndex++;
-            });
-
-            // 添加圖例
-            const legendDiv = document.createElement('div');
-            legendDiv.className = 'map-legend';
-            legendDiv.style.position = 'absolute';
-            legendDiv.style.bottom = '30px';
-            legendDiv.style.right = '10px';
-            legendDiv.style.zIndex = '1';
-
-            let legendHTML = '<h4>📊 測站軌跡</h4>';
-            legendData.forEach(item => {
-                legendHTML += `
-                    <div class="map-legend-item">
-                        <div class="map-legend-color" style="background: ${item.color};"></div>
-                        <span>${item.name} <small style="color: #95a5a6;">(${item.count} 點)</small></span>
-                    </div>
-                `;
-            });
-
-            legendDiv.innerHTML = legendHTML;
-            document.getElementById('trajectory-map').appendChild(legendDiv);
-
-            // 自動調整視圖以顯示所有點
-            const bounds = new mapboxgl.LngLatBounds();
-            gpsPoints.forEach(p => {
-                bounds.extend([p.longitude, p.latitude]);
-            });
-
-            map.fitBounds(bounds, {
-                padding: { top: 50, bottom: 50, left: 50, right: 50 },
-                maxZoom: 15
-            });
-
-            console.log('地圖初始化完成');
-        });
+    if (!gpsPoints || gpsPoints.length === 0) {
+        console.warn('沒有 GPS 數據點');
+        return;
     }
-})();
+
+    console.log(`載入 ${gpsPoints.length} 個 GPS 數據點`);
+
+    // 計算地圖中心點
+    const lats = gpsPoints.map(p => p.latitude);
+    const lngs = gpsPoints.map(p => p.longitude);
+    const avgLat = lats.reduce((a, b) => a + b, 0) / lats.length;
+    const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
+
+    // 初始化 Leaflet 地圖
+    const map = L.map('trajectory-map').setView([avgLat, avgLng], 15);
+
+    // 添加 OpenStreetMap 圖層
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // 按測站分組數據點
+    const stationGroups = {};
+    gpsPoints.forEach(point => {
+        if (!stationGroups[point.station_name]) {
+            stationGroups[point.station_name] = [];
+        }
+        stationGroups[point.station_name].push(point);
+    });
+
+    // 為每個測站選擇顏色
+    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+    let colorIndex = 0;
+    const legendData = [];
+
+    // 繪製每個測站的軌跡
+    Object.keys(stationGroups).forEach(stationName => {
+        const points = stationGroups[stationName];
+        const color = colors[colorIndex % colors.length];
+
+        // 按時間排序
+        points.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        // 創建軌跡線
+        const lineCoordinates = points.map(p => [p.latitude, p.longitude]);
+        L.polyline(lineCoordinates, {
+            color: color,
+            weight: 4,
+            opacity: 0.8
+        }).addTo(map);
+
+        // 添加標記點（只顯示起點和終點）
+        points.forEach((point, index) => {
+            const isFirst = index === 0;
+            const isLast = index === points.length - 1;
+
+            if (isFirst || isLast) {
+                // Popup 內容
+                const timestamp = new Date(point.timestamp).toLocaleString('zh-TW');
+                let popupHTML = `<div style="min-width: 200px;">`;
+
+                if (isFirst) {
+                    popupHTML += `<div style="color: ${color}; font-weight: 600; margin-bottom: 5px;">🔵 起點</div>`;
+                } else if (isLast) {
+                    popupHTML += `<div style="color: ${color}; font-weight: 600; margin-bottom: 5px;">🔴 最新位置</div>`;
+                }
+
+                popupHTML += `<strong>${stationName}</strong><br>`;
+                popupHTML += `<small>${timestamp}</small><hr style="margin: 8px 0;">`;
+
+                if (point.temperature !== null) {
+                    popupHTML += `溫度: ${point.temperature.toFixed(2)}°C<br>`;
+                }
+                if (point.ph !== null) {
+                    popupHTML += `pH: ${point.ph.toFixed(2)}<br>`;
+                }
+                if (point.oxygen !== null) {
+                    popupHTML += `溶氧: ${point.oxygen.toFixed(2)} mg/L<br>`;
+                }
+
+                popupHTML += `<small>📍 ${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}</small>`;
+                popupHTML += `</div>`;
+
+                L.circleMarker([point.latitude, point.longitude], {
+                    radius: isLast ? 8 : 6,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    fillOpacity: 0.9
+                }).bindPopup(popupHTML).addTo(map);
+            }
+        });
+
+        legendData.push({ name: stationName, color: color, count: points.length });
+        colorIndex++;
+    });
+
+    // 添加圖例
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML = '<h4>📊 測站軌跡</h4>';
+        legendData.forEach(item => {
+            div.innerHTML += `
+                <div class="map-legend-item">
+                    <div class="map-legend-color" style="background: ${item.color};"></div>
+                    <span>${item.name} (${item.count} 點)</span>
+                </div>
+            `;
+        });
+        return div;
+    };
+    legend.addTo(map);
+
+    // 自動調整視圖以顯示所有點
+    const bounds = L.latLngBounds(gpsPoints.map(p => [p.latitude, p.longitude]));
+    map.fitBounds(bounds, { padding: [50, 50] });
+
+    console.log('地圖初始化完成');
+});
 {% endif %}
 </script>
 {% endblock %}
