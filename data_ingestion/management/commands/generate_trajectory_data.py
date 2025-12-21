@@ -38,8 +38,21 @@ class Command(BaseCommand):
 
         if not stations.exists():
             self.stdout.write(self.style.ERROR('錯誤: 沒有找到任何測站!'))
-            self.stdout.write('請先在管理後台創建測站並設定經緯度')
+            self.stdout.write('請先在管理後台創建測站')
             return
+
+        # 自動為沒有經緯度的測站設置潮境公園座標
+        stations_updated = 0
+        for station in stations:
+            if not station.latitude or not station.longitude:
+                station.latitude = Decimal('25.1423')  # 潮境公園北緯
+                station.longitude = Decimal('121.8027')  # 潮境公園東經
+                station.save()
+                stations_updated += 1
+                self.stdout.write(self.style.SUCCESS(f'已為測站 "{station.station_name}" 設置潮境公園座標'))
+
+        if stations_updated > 0:
+            self.stdout.write(f'\n已更新 {stations_updated} 個測站的座標為潮境公園位置\n')
 
         # 設定時間範圍
         start_date = datetime(2025, 12, 14, 0, 0, 0, tzinfo=taipei_tz)
