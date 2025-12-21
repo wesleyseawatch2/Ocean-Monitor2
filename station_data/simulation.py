@@ -104,17 +104,49 @@ class OceanDataSimulator:
         # 濁度通常在 3-8 之間，隨機波動
         turbidity = random.uniform(3.0, 8.0)
         return round(Decimal(str(turbidity)), 3)
-    
+
+    def generate_gps_with_drift(self, base_lat, base_lng):
+        """
+        生成帶有漂移的 GPS 座標（模擬移動中的儀器）
+
+        Args:
+            base_lat: 基礎緯度
+            base_lng: 基礎經度
+
+        Returns:
+            (latitude, longitude) tuple
+        """
+        # 模擬儀器在基礎位置附近漂移
+        # 漂移範圍約 ±0.01 度 (約 1.1 公里)
+        lat_drift = random.uniform(-0.01, 0.01)
+        lng_drift = random.uniform(-0.01, 0.01)
+
+        new_lat = base_lat + lat_drift if base_lat else None
+        new_lng = base_lng + lng_drift if base_lng else None
+
+        return (
+            round(Decimal(str(new_lat)), 6) if new_lat else None,
+            round(Decimal(str(new_lng)), 6) if new_lng else None
+        )
+
     def generate_reading(self, station):
         """
         生成完整的一筆數據記錄
-        
+
         Args:
             station: Station 實例
-            
+
         Returns:
             Reading 實例（已保存到資料庫）
         """
+        # 如果測站有基礎座標,生成帶漂移的位置
+        latitude, longitude = None, None
+        if station.latitude and station.longitude:
+            latitude, longitude = self.generate_gps_with_drift(
+                float(station.latitude),
+                float(station.longitude)
+            )
+
         reading = Reading.objects.create(
             station=station,
             timestamp=timezone.now(),
@@ -126,6 +158,8 @@ class OceanDataSimulator:
             fluorescence=self.generate_fluorescence(),
             turbidity=self.generate_turbidity(),
             salinity=self.generate_salinity(),
+            latitude=latitude,
+            longitude=longitude,
         )
         return reading
 
@@ -160,6 +194,8 @@ def simulate_data_for_all_stations():
             'ph': float(reading.ph),
             'oxygen': float(reading.oxygen),
             'salinity': float(reading.salinity),
+            'latitude': float(reading.latitude) if reading.latitude else None,
+            'longitude': float(reading.longitude) if reading.longitude else None,
         })
     
     return {

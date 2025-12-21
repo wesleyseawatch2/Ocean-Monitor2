@@ -22,8 +22,8 @@ class Station(models.Model):
 class Reading(models.Model):
     """數據記錄資料表"""
     station = models.ForeignKey(
-        Station, 
-        on_delete=models.CASCADE, 
+        Station,
+        on_delete=models.CASCADE,
         related_name='readings',
         verbose_name="測站"
     )
@@ -36,11 +36,13 @@ class Reading(models.Model):
     fluorescence = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True, verbose_name="螢光值")
     turbidity = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True, verbose_name="濁度")
     salinity = models.DecimalField(max_digits=6, decimal_places=4, null=True, blank=True, verbose_name="鹽度")
-    
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="緯度")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="經度")
+
     class Meta:
         verbose_name = "數據記錄"
         verbose_name_plural = "數據記錄"
         ordering = ['-timestamp']
-    
+
     def __str__(self):
         return f"{self.station.station_name} - {self.timestamp}"
