@@ -76,21 +76,26 @@ def station_detail(request, station_id):
 
 def reading_list(request):
     """數據記錄列表 - 包含 GPS 軌跡地圖"""
-    readings = Reading.objects.select_related('station').all()[:100]
+    # 表格顯示最新 100 筆
+    readings = Reading.objects.select_related('station').order_by('-timestamp')[:100]
 
-    # 收集所有有 GPS 座標的數據點
+    # 地圖顯示所有有 GPS 座標的數據點（用於完整軌跡）
+    all_gps_readings = Reading.objects.select_related('station').filter(
+        latitude__isnull=False,
+        longitude__isnull=False
+    ).order_by('timestamp')  # 按時間順序排序以正確顯示軌跡
+
     gps_points = []
-    for reading in readings:
-        if reading.latitude and reading.longitude:
-            gps_points.append({
-                'station_name': reading.station.station_name,
-                'latitude': float(reading.latitude),
-                'longitude': float(reading.longitude),
-                'timestamp': reading.timestamp.isoformat(),
-                'temperature': float(reading.temperature) if reading.temperature else None,
-                'ph': float(reading.ph) if reading.ph else None,
-                'oxygen': float(reading.oxygen) if reading.oxygen else None,
-            })
+    for reading in all_gps_readings:
+        gps_points.append({
+            'station_name': reading.station.station_name,
+            'latitude': float(reading.latitude),
+            'longitude': float(reading.longitude),
+            'timestamp': reading.timestamp.isoformat(),
+            'temperature': float(reading.temperature) if reading.temperature else None,
+            'ph': float(reading.ph) if reading.ph else None,
+            'oxygen': float(reading.oxygen) if reading.oxygen else None,
+        })
 
     context = {
         'readings': readings,
