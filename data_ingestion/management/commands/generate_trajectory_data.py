@@ -41,18 +41,45 @@ class Command(BaseCommand):
             self.stdout.write('請先在管理後台創建測站')
             return
 
+        # 定義三個海域範圍
+        SEA_AREAS = {
+            'chaojing': {  # 潮境公園外海
+                'name': '潮境公園外海',
+                'lat_range': (25.115, 25.170),
+                'lng_range': (121.833, 121.923)
+            },
+            'bisha': {  # 碧砂漁港外海
+                'name': '碧砂漁港外海',
+                'lat_range': (25.116693, 25.170747),
+                'lng_range': (121.817556, 121.907124)
+            },
+            'zhengbin': {  # 正濱漁港外海
+                'name': '正濱漁港外海',
+                'lat_range': (25.126682, 25.180736),
+                'lng_range': (121.801490, 121.891066)
+            }
+        }
+
         # 自動為沒有經緯度的測站設置海上初始座標
-        # 指定海域範圍: 緯度 25.115° ~ 25.170°, 經度 121.833° ~ 121.923°
         stations_updated = 0
-        for station in stations:
+        station_list = list(stations)
+
+        for idx, station in enumerate(station_list):
             if not station.latitude or not station.longitude:
-                # 在指定海域範圍內隨機選擇起始點
-                station.latitude = Decimal(str(round(random.uniform(25.115, 25.170), 6)))
-                station.longitude = Decimal(str(round(random.uniform(121.833, 121.923), 6)))
+                # 根據測站索引循環分配海域
+                area_keys = list(SEA_AREAS.keys())
+                area_key = area_keys[idx % len(area_keys)]
+                area = SEA_AREAS[area_key]
+
+                # 在該海域範圍內隨機選擇起始點
+                lat_min, lat_max = area['lat_range']
+                lng_min, lng_max = area['lng_range']
+                station.latitude = Decimal(str(round(random.uniform(lat_min, lat_max), 6)))
+                station.longitude = Decimal(str(round(random.uniform(lng_min, lng_max), 6)))
                 station.save()
                 stations_updated += 1
                 self.stdout.write(self.style.SUCCESS(
-                    f'已為測站 "{station.station_name}" 設置海上座標: '
+                    f'已為測站 "{station.station_name}" 設置 {area["name"]} 座標: '
                     f'{station.latitude}°N, {station.longitude}°E'
                 ))
 
@@ -78,12 +105,34 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f'  ⚠ 跳過 (未設定經緯度)'))
                 continue
 
+            # 判斷測站屬於哪個海域（根據座標）
+            station_lat = float(station.latitude)
+            station_lng = float(station.longitude)
+
+            # 找出最接近的海域
+            current_area = None
+            for area_key, area_data in SEA_AREAS.items():
+                lat_min, lat_max = area_data['lat_range']
+                lng_min, lng_max = area_data['lng_range']
+                if lat_min <= station_lat <= lat_max and lng_min <= station_lng <= lng_max:
+                    current_area = area_data
+                    self.stdout.write(f'  海域: {area_data["name"]}')
+                    break
+
+            # 如果找不到匹配的海域，使用預設範圍（潮境）
+            if not current_area:
+                current_area = SEA_AREAS['chaojing']
+                self.stdout.write(f'  使用預設海域: {current_area["name"]}')
+
+            LAT_MIN, LAT_MAX = current_area['lat_range']
+            LNG_MIN, LNG_MAX = current_area['lng_range']
+
             station_readings = 0
             current_time = start_date
 
             # 初始化 GPS 位置（從測站基礎位置開始）
-            current_lat = float(station.latitude)
-            current_lng = float(station.longitude)
+            current_lat = station_lat
+            current_lng = station_lng
 
             # 模擬主要洋流方向（東北向，帶有隨機擾動）
             # 這會產生更連貫的漂移軌跡
@@ -99,12 +148,7 @@ class Command(BaseCommand):
                 current_lat += lat_drift
                 current_lng += lng_drift
 
-                # 確保保持在指定海域範圍內
-                # 緯度範圍: 25.115° ~ 25.170°
-                # 經度範圍: 121.833° ~ 121.923°
-                LAT_MIN, LAT_MAX = 25.115, 25.170
-                LNG_MIN, LNG_MAX = 121.833, 121.923
-
+                # 確保保持在該測站對應的海域範圍內
                 # 如果超出範圍，反彈回來（模擬儀器遇到邊界後改變方向）
                 if current_lat < LAT_MIN:
                     current_lat = LAT_MIN + 0.001
