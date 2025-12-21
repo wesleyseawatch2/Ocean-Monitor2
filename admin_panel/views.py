@@ -85,12 +85,16 @@ def station_create(request):
         device_model = request.POST.get('device_model')
         location = request.POST.get('location')
         install_date = request.POST.get('install_date')
+        latitude = request.POST.get('latitude') or None
+        longitude = request.POST.get('longitude') or None
 
         Station.objects.create(
             station_name=station_name,
             device_model=device_model,
             location=location,
-            install_date=install_date
+            install_date=install_date,
+            latitude=latitude,
+            longitude=longitude
         )
 
         messages.success(request, f'測站 "{station_name}" 已成功新增!')
@@ -109,6 +113,8 @@ def station_edit(request, pk):
         station.device_model = request.POST.get('device_model')
         station.location = request.POST.get('location')
         station.install_date = request.POST.get('install_date')
+        station.latitude = request.POST.get('latitude') or None
+        station.longitude = request.POST.get('longitude') or None
         station.save()
 
         messages.success(request, f'測站 "{station.station_name}" 已更新!')

@@ -96,7 +96,9 @@ def station(db):
         station_name='測試測站A',
         device_model='Model-X100',
         location='台北港',
-        install_date='2024-01-15'
+        install_date='2024-01-15',
+        latitude=25.033964,
+        longitude=121.564472
     )
 
 
@@ -107,7 +109,9 @@ def station_b(db):
         station_name='測試測站B',
         device_model='Model-X200',
         location='基隆港',
-        install_date='2024-02-20'
+        install_date='2024-02-20',
+        latitude=25.128675,
+        longitude=121.739435
     )
 
 
@@ -116,17 +120,19 @@ def multiple_stations(db):
     """建立多個測試測站"""
     stations = []
     locations = [
-        ('測站A', 'Model-A', '台北港', '2024-01-01'),
-        ('測站B', 'Model-B', '基隆港', '2024-01-02'),
-        ('測站C', 'Model-C', '高雄港', '2024-01-03'),
+        ('測站A', 'Model-A', '台北港', '2024-01-01', 25.033964, 121.564472),
+        ('測站B', 'Model-B', '基隆港', '2024-01-02', 25.128675, 121.739435),
+        ('測站C', 'Model-C', '高雄港', '2024-01-03', 22.619997, 120.266197),
     ]
 
-    for name, model, location, date in locations:
+    for name, model, location, date, lat, lng in locations:
         station = Station.objects.create(
             station_name=name,
             device_model=model,
             location=location,
-            install_date=date
+            install_date=date,
+            latitude=lat,
+            longitude=lng
         )
         stations.append(station)
 
