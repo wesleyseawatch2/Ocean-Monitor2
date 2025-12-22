@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 定期刷新最新數據記錄表格（每 30 秒）
+    // 定期刷新最新數據記錄表格和最新數據卡片（每 30 秒）
     function refreshLatestReadings() {
         const stationId = '{{ station.id }}';
         const tbody = document.getElementById('latest-readings-tbody');
@@ -532,6 +532,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }, 1500);
                             }
                         });
+
+                        // 同時更新最新數據讀取卡片
+                        updateLatestDataCards(doc);
+
                         console.log('[刷新] 最新數據記錄已更新 (有新數據)');
                     } else {
                         console.log('[刷新] 最新數據記錄已檢查 (無新數據)');
@@ -541,6 +545,52 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('[刷新] 更新失敗:', error);
             });
+    }
+
+    // 更新最新數據讀取卡片的函數
+    function updateLatestDataCards(doc) {
+        // 要更新的元素ID列表
+        const dataElements = [
+            'latest-timestamp',
+            'latest-temperature',
+            'latest-ph',
+            'latest-oxygen',
+            'latest-salinity',
+            'latest-conductivity',
+            'latest-pressure',
+            'latest-fluorescence',
+            'latest-turbidity',
+            'total-reading-count'
+        ];
+
+        dataElements.forEach(elementId => {
+            const currentElement = document.getElementById(elementId);
+            const newElement = doc.getElementById(elementId);
+
+            if (currentElement && newElement) {
+                const oldValue = currentElement.textContent.trim();
+                const newValue = newElement.textContent.trim();
+
+                if (oldValue !== newValue) {
+                    currentElement.textContent = newValue;
+
+                    // 添加閃爍效果
+                    const parentCard = currentElement.closest('.data-item') || currentElement;
+                    parentCard.style.backgroundColor = '#ffd54f';
+                    parentCard.style.transform = 'scale(1.05)';
+                    parentCard.style.transition = 'all 0.3s ease';
+                    parentCard.style.boxShadow = '0 4px 12px rgba(255, 213, 79, 0.6)';
+
+                    setTimeout(() => {
+                        parentCard.style.backgroundColor = '';
+                        parentCard.style.transform = 'scale(1)';
+                        parentCard.style.boxShadow = '';
+                    }, 1500);
+
+                    console.log(`[刷新] 已更新 ${elementId}: ${oldValue} → ${newValue}`);
+                }
+            }
+        });
     }
 
     // 每 30 秒自動刷新一次
