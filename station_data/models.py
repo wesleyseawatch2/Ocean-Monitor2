@@ -4,10 +4,17 @@ from django.utils import timezone
 
 
 class Report(models.Model):
-    """報告資料表 - 集中管理 Celery 任務產生的報告"""
+    """
+    報告資料表 - 集中管理 Celery 任務產生的報告
+
+    支援兩種報告類型：
+    1. 全系統報告：不關聯特定測站，統計所有測站數據
+    2. 測站報告：關聯特定測站，只統計該測站數據
+    """
 
     REPORT_TYPES = [
         ('daily_statistics', '每日統計報告'),
+        ('station_daily', '測站每日報告'),
         ('data_update', '數據更新報告'),
         ('alert_check', '異常檢查報告'),
         ('custom', '自定義報告'),
@@ -25,6 +32,17 @@ class Report(models.Model):
         verbose_name="報告類型"
     )
     title = models.CharField(max_length=200, verbose_name="報告標題")
+
+    # 測站關聯（可選）- 如果為 None 則表示全系統報告
+    station = models.ForeignKey(
+        'data_ingestion.Station',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='reports',
+        verbose_name="關聯測站"
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

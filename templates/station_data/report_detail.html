@@ -9,7 +9,11 @@
         <div>
             <a href="{% url 'station_data:report_list' %}" style="text-decoration: none; color: #007bff;">← 返回報告列表</a>
         </div>
-        <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="display: flex; align-items: center; gap: 5px; margin: 0; cursor: pointer;">
+                <input type="checkbox" id="anonymizeCheckbox" style="cursor: pointer;">
+                <span style="font-size: 13px; color: #666;">去識別化</span>
+            </label>
             <button onclick="generateInsight({{ report.id }})" class="btn btn-sm btn-primary" id="insightBtn">
                 🤖 生成 AI 洞察
             </button>
@@ -41,7 +45,12 @@
 
     <!-- AI 洞察區域 -->
     <div id="insightSection" class="report-section" style="display: none;">
-        <h3>🤖 AI 數據洞察</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">🤖 AI 數據洞察</h3>
+            <span id="anonymizeBadge" class="privacy-badge" style="display: none;">
+                🔒 已去識別化
+            </span>
+        </div>
         <div class="insight-box" id="insightContent">
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner"></div>
@@ -345,6 +354,16 @@
     opacity: 0.6;
 }
 
+.privacy-badge {
+    background-color: #28a745;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
 .insight-box {
     background-color: #f0f8ff;
     border-left: 4px solid #007bff;
@@ -553,6 +572,15 @@ function generateInsight(reportId) {
     insightBtn.disabled = true;
     insightBtn.textContent = '生成中...';
 
+    // 獲取去識別化選項
+    const anonymizeCheckbox = document.getElementById('anonymizeCheckbox');
+    const anonymizeBadge = document.getElementById('anonymizeBadge');
+    const anonymize = anonymizeCheckbox.checked;
+
+    // 更新按鈕文字
+    insightBtn.textContent = anonymize ? '生成去識別化分析中...' : '生成中...';
+    anonymizeBadge.style.display = 'none';
+
     // 調用 API
     fetch(`/stations/reports/${reportId}/insight/`, {
         method: 'POST',
@@ -560,6 +588,9 @@ function generateInsight(reportId) {
             'X-CSRFToken': getCookie('csrftoken'),
             'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+            anonymize: anonymize
+        })
     })
     .then(response => response.json())
     .then(data => {
@@ -569,6 +600,11 @@ function generateInsight(reportId) {
             // 顯示洞察內容
             insightText.innerHTML = formatInsightText(data.insight);
             insightText.style.display = 'block';
+
+            // 顯示去識別化標記
+            if (data.anonymized) {
+                anonymizeBadge.style.display = 'inline-block';
+            }
 
             // 更新按鈕
             insightBtn.textContent = '🔄 重新生成洞察';

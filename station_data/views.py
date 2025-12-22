@@ -351,14 +351,20 @@ def report_insight(request, report_id):
                     'message': 'Gemini API 未配置。請設置 GEMINI_API_KEY 環境變量。'
                 }, status=500)
 
-            # 生成洞察
-            insight = gemini_service.generate_report_insight(report)
+            # 獲取去識別化參數
+            import json as json_module
+            request_data = json_module.loads(request.body) if request.body else {}
+            anonymize = request_data.get('anonymize', False)
+
+            # 生成洞察（支持去識別化）
+            insight = gemini_service.generate_report_insight(report, anonymize=anonymize)
 
             if insight['status'] == 'success':
                 return JsonResponse({
                     'status': 'success',
                     'insight': insight['content'],
                     'report_id': report.id,
+                    'anonymized': insight.get('anonymized', False),
                 })
             else:
                 return JsonResponse({

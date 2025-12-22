@@ -98,10 +98,13 @@ def generate_daily_statistics():
     """
     產生每日統計報告（定時任務）
 
-    這個任務會由 Celery Beat 定時執行
+    這個任務會：
+    1. 生成全系統統計報告（所有測站）
+    2. 為每個測站生成獨立的統計報告
+
     統計項目：
     - 各測站數據筆數
-    - 平均溫度、鹽度等
+    - 平均溫度、鹽度、溶氧等 8 個參數
     - 異常數據數量
     """
     from data_ingestion.models import Station, Reading
@@ -220,11 +223,123 @@ def generate_daily_statistics():
         },
     )
 
-    print(f"[定時任務] 報告已保存，ID: {report.id}")
+    print(f"[定時任務] 全系統報告已保存，ID: {report.id}")
+
+    # ==========================================
+    # 為每個測站生成獨立的統計報告
+    # ==========================================
+    station_report_ids = []
+
+    for station in Station.objects.all():
+        # 取得該測站今天的數據
+        station_today_readings = today_readings.filter(station=station)
+        station_count = station_today_readings.count()
+
+        if station_count == 0:
+            print(f"[定時任務] 測站 {station.station_name} 今日無數據，跳過")
+            continue
+
+        # 計算該測站的平均值和範圍
+        station_stats_agg = station_today_readings.aggregate(
+            # 溫度
+            avg_temperature=Avg('temperature'),
+            max_temperature=Max('temperature'),
+            min_temperature=Min('temperature'),
+            # pH
+            avg_ph=Avg('ph'),
+            max_ph=Max('ph'),
+            min_ph=Min('ph'),
+            # 溶氧
+            avg_oxygen=Avg('oxygen'),
+            max_oxygen=Max('oxygen'),
+            min_oxygen=Min('oxygen'),
+            # 鹽度
+            avg_salinity=Avg('salinity'),
+            max_salinity=Max('salinity'),
+            min_salinity=Min('salinity'),
+            # 電導率
+            avg_conductivity=Avg('conductivity'),
+            max_conductivity=Max('conductivity'),
+            min_conductivity=Min('conductivity'),
+            # 壓力
+            avg_pressure=Avg('pressure'),
+            max_pressure=Max('pressure'),
+            min_pressure=Min('pressure'),
+            # 螢光值
+            avg_fluorescence=Avg('fluorescence'),
+            max_fluorescence=Max('fluorescence'),
+            min_fluorescence=Min('fluorescence'),
+            # 濁度
+            avg_turbidity=Avg('turbidity'),
+            max_turbidity=Max('turbidity'),
+            min_turbidity=Min('turbidity'),
+        )
+
+        # 生成測站報告摘要
+        station_summary_lines = [
+            f"測站: {station.station_name} ({station.location})",
+            f"數據筆數: {station_count}",
+        ]
+        if station_stats_agg['avg_temperature']:
+            station_summary_lines.append(f"平均溫度: {float(station_stats_agg['avg_temperature']):.2f}°C")
+        if station_stats_agg['avg_salinity']:
+            station_summary_lines.append(f"平均鹽度: {float(station_stats_agg['avg_salinity']):.4f}")
+
+        # 保存測站報告
+        station_report = Report.objects.create(
+            report_type='station_daily',
+            station=station,  # 關聯到特定測站
+            title=f'{today} {station.station_name} 每日統計',
+            status='success' if station_count > 0 else 'warning',
+            summary='\n'.join(station_summary_lines),
+            content={
+                'date': today.isoformat(),
+                'station_id': station.id,
+                'station_name': station.station_name,
+                'station_location': station.location,
+                'total_readings': station_count,
+                'averages': {
+                    # 平均值
+                    'temperature': float(station_stats_agg['avg_temperature']) if station_stats_agg['avg_temperature'] else None,
+                    'ph': float(station_stats_agg['avg_ph']) if station_stats_agg['avg_ph'] else None,
+                    'oxygen': float(station_stats_agg['avg_oxygen']) if station_stats_agg['avg_oxygen'] else None,
+                    'salinity': float(station_stats_agg['avg_salinity']) if station_stats_agg['avg_salinity'] else None,
+                    'conductivity': float(station_stats_agg['avg_conductivity']) if station_stats_agg['avg_conductivity'] else None,
+                    'pressure': float(station_stats_agg['avg_pressure']) if station_stats_agg['avg_pressure'] else None,
+                    'fluorescence': float(station_stats_agg['avg_fluorescence']) if station_stats_agg['avg_fluorescence'] else None,
+                    'turbidity': float(station_stats_agg['avg_turbidity']) if station_stats_agg['avg_turbidity'] else None,
+                    # 最大值
+                    'max_temperature': float(station_stats_agg['max_temperature']) if station_stats_agg['max_temperature'] else None,
+                    'max_ph': float(station_stats_agg['max_ph']) if station_stats_agg['max_ph'] else None,
+                    'max_oxygen': float(station_stats_agg['max_oxygen']) if station_stats_agg['max_oxygen'] else None,
+                    'max_salinity': float(station_stats_agg['max_salinity']) if station_stats_agg['max_salinity'] else None,
+                    'max_conductivity': float(station_stats_agg['max_conductivity']) if station_stats_agg['max_conductivity'] else None,
+                    'max_pressure': float(station_stats_agg['max_pressure']) if station_stats_agg['max_pressure'] else None,
+                    'max_fluorescence': float(station_stats_agg['max_fluorescence']) if station_stats_agg['max_fluorescence'] else None,
+                    'max_turbidity': float(station_stats_agg['max_turbidity']) if station_stats_agg['max_turbidity'] else None,
+                    # 最小值
+                    'min_temperature': float(station_stats_agg['min_temperature']) if station_stats_agg['min_temperature'] else None,
+                    'min_ph': float(station_stats_agg['min_ph']) if station_stats_agg['min_ph'] else None,
+                    'min_oxygen': float(station_stats_agg['min_oxygen']) if station_stats_agg['min_oxygen'] else None,
+                    'min_salinity': float(station_stats_agg['min_salinity']) if station_stats_agg['min_salinity'] else None,
+                    'min_conductivity': float(station_stats_agg['min_conductivity']) if station_stats_agg['min_conductivity'] else None,
+                    'min_pressure': float(station_stats_agg['min_pressure']) if station_stats_agg['min_pressure'] else None,
+                    'min_fluorescence': float(station_stats_agg['min_fluorescence']) if station_stats_agg['min_fluorescence'] else None,
+                    'min_turbidity': float(station_stats_agg['min_turbidity']) if station_stats_agg['min_turbidity'] else None,
+                }
+            },
+        )
+
+        station_report_ids.append(station_report.id)
+        print(f"[定時任務] 測站 {station.station_name} 報告已保存，ID: {station_report.id}")
+
+    print(f"[定時任務] 完成！生成了 1 個全系統報告 + {len(station_report_ids)} 個測站報告")
 
     return {
         'status': 'success',
-        'report_id': report.id,
+        'system_report_id': report.id,
+        'station_report_ids': station_report_ids,
+        'station_report_count': len(station_report_ids),
         'date': today.isoformat(),
         'total_readings': total_readings,
         'station_stats': station_stats,

@@ -7,7 +7,6 @@ import os
 import json
 import google.generativeai as genai
 from django.conf import settings
-from analysis_tools.anonymizer import anonymize_report_data
 
 
 class GeminiInsightService:
@@ -33,23 +32,22 @@ class GeminiInsightService:
             'max_output_tokens': 2048,
         }
 
-    def generate_report_insight(self, report, anonymize=False):
+    def generate_report_insight(self, report):
         """
         為報告生成 AI 洞察
 
         Args:
             report: Report 模型實例
-            anonymize: 是否進行去識別化處理（預設為 False）
 
         Returns:
             dict: 包含洞察內容的字典
         """
         try:
-            # 準備報告數據（可選去識別化）
-            report_data = self._prepare_report_data(report, anonymize=anonymize)
+            # 準備報告數據
+            report_data = self._prepare_report_data(report)
 
             # 構建提示詞
-            prompt = self._build_prompt(report, report_data, anonymize=anonymize)
+            prompt = self._build_prompt(report, report_data)
 
             # 調用 Gemini API (使用配置以提高速度)
             response = self.model.generate_content(
@@ -64,7 +62,6 @@ class GeminiInsightService:
                 'content': response.text,
                 'report_id': report.id,
                 'report_type': report.report_type,
-                'anonymized': anonymize,
             }
 
             return insight
@@ -76,17 +73,8 @@ class GeminiInsightService:
                 'report_id': report.id,
             }
 
-    def _prepare_report_data(self, report, anonymize=False):
-        """
-        準備報告數據供 AI 分析
-
-        Args:
-            report: Report 模型實例
-            anonymize: 是否進行去識別化處理
-
-        Returns:
-            dict: 處理後的報告數據
-        """
+    def _prepare_report_data(self, report):
+        """準備報告數據供 AI 分析"""
         data = {
             'title': report.title,
             'report_type': report.get_report_type_display(),
@@ -95,14 +83,9 @@ class GeminiInsightService:
             'created_at': report.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'content': report.content,
         }
-
-        # 如果需要去識別化
-        if anonymize:
-            data = anonymize_report_data(data)
-
         return data
 
-    def _build_prompt(self, report, report_data, anonymize=False):
+    def _build_prompt(self, report, report_data):
         """構建給 Gemini 的提示詞"""
 
         # 基本提示詞 - 要求 Markdown 格式,直接輸出報告內容
@@ -113,7 +96,6 @@ class GeminiInsightService:
 - 類型: {report_type}
 - 狀態: {status}
 - 創建時間: {created_at}
-{anonymization_note}
 
 報告摘要:
 {summary}
@@ -142,17 +124,11 @@ class GeminiInsightService:
         # 格式化內容
         content_json = json.dumps(report_data['content'], ensure_ascii=False, indent=2)
 
-        # 添加去識別化說明
-        anonymization_note = ''
-        if anonymize and report_data.get('anonymized'):
-            anonymization_note = f"\n- **資料處理**: {report_data.get('anonymization_note', '已去識別化')}"
-
         prompt = base_prompt.format(
             title=report_data['title'],
             report_type=report_data['report_type'],
             status=report_data['status'],
             created_at=report_data['created_at'],
-            anonymization_note=anonymization_note,
             summary=report_data['summary'],
             content_json=content_json,
         )
