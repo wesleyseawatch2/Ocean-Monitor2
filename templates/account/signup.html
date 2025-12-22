@@ -1,11 +1,29 @@
 {% extends "base.html" %}
 {% load account socialaccount %}
+{% load static %}
 
 {% block title %}註冊 - Ocean Monitor Web{% endblock %}
+
+{% block extra_css %}
+.signup-logo {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.signup-logo img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+}
+{% endblock %}
 
 {% block content %}
 <div class="form-container">
     <div class="form-card">
+        <div class="signup-logo">
+            <img src="{% static 'images/logo.png' %}" alt="Ocean Monitor Logo">
+        </div>
         <div class="form-header">
             <h2>🌊 加入我們</h2>
             <p>建立您的帳號，開始使用Ocean Monitor Web</p>

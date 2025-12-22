@@ -1,10 +1,15 @@
 {% load socialaccount %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登入 - Ocean Monitor Web</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+
     <style>
         * {
             margin: 0;
@@ -34,6 +39,14 @@
         .login-header {
             text-align: center;
             margin-bottom: 30px;
+        }
+
+        .login-header img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
         }
 
         .login-header h1 {
@@ -173,6 +186,7 @@
 <body>
     <div class="login-container">
         <div class="login-header">
+            <img src="{% static 'images/logo.png' %}" alt="Ocean Monitor Logo">
             <h1>Ocean Monitor Web</h1>
             <p>請登入以繼續使用</p>
         </div>

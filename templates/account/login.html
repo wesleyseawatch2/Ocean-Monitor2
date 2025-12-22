@@ -1,11 +1,29 @@
 {% extends "base.html" %}
 {% load account socialaccount %}
+{% load static %}
 
 {% block title %}登入 - Ocean Monitor Web{% endblock %}
+
+{% block extra_css %}
+.login-logo {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.login-logo img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+}
+{% endblock %}
 
 {% block content %}
 <div class="form-container">
     <div class="form-card">
+        <div class="login-logo">
+            <img src="{% static 'images/logo.png' %}" alt="Ocean Monitor Logo">
+        </div>
         <div class="form-header">
             <h2>🌊 歡迎回來</h2>
             <p>登入您的帳號以繼續使用服務</p>

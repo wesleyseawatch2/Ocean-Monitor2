@@ -17,7 +17,12 @@
       "Bash(git commit:*)",
       "Bash(cat:*)",
       "Bash(daphne:*)",
-      "Bash(./venv/Scripts/python.exe manage.py:*)"
+      "Bash(./venv/Scripts/python.exe manage.py:*)",
+      "Bash(for file in templates/**/*.html)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(./venv/Scripts/python.exe -c \"from django.template import Template, Context; import sys; content = open\\(''$file'', ''r'', encoding=''utf-8''\\).read\\(\\); print\\(''OK''\\)\")",
+      "Bash(done)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []

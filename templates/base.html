@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Ocean Monitor Web{% endblock %}</title>
 
+    <!-- Favicon -->
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+
     <!-- Shepherd.js for Tour Guide -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css"/>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>
@@ -63,10 +67,26 @@
             justify-content: space-between;
         }
 
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo-container img {
+            height: 45px;
+            width: 45px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
         nav h1 {
             font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: -0.02em;
+            margin: 0;
         }
 
         .nav-left {
@@ -555,7 +575,10 @@
     <nav>
         <div class="nav-container">
             <div class="nav-left">
-                <h1>Ocean Monitor Web</h1>
+                <a href="{% url 'station_data:station_list' %}" class="logo-container">
+                    <img src="{% static 'images/logo.png' %}" alt="Ocean Monitor Logo">
+                    <h1>Ocean Monitor Web</h1>
+                </a>
                 <div class="nav-links">
                     <a href="{% url 'station_data:station_list' %}">測站列表</a>
                     <a href="{% url 'station_data:reading_list' %}">數據記錄</a>
