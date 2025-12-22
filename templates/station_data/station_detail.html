@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ station.station_name }} - 海洋監測系統{% endblock %}
+{% block title %}{{ station.station_name }} - Ocean Monitor Web{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'realtime/realtime.css' %}">
@@ -10,51 +10,154 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <style>
+/* 專業站點詳情樣式 */
+.station-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.info-card p {
+    margin: 0.75rem 0;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.info-card strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
 /* 時間範圍按鈕樣式 */
+.time-range-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+}
+
 .time-range-btn {
-    padding: 10px 16px;
-    border: 2px solid #ffc107;
+    padding: 0.6rem 1.2rem;
+    border: 2px solid var(--border-color);
     background-color: white;
-    color: #333;
-    border-radius: 6px;
+    color: var(--text-primary);
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 600;
     transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
 }
 
 .time-range-btn:hover {
-    background-color: #fff8e1;
+    background-color: var(--bg-primary);
+    border-color: var(--secondary-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
 }
 
 .time-range-btn.active {
-    background-color: #ffc107;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
-    font-weight: 700;
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(12, 74, 110, 0.3);
 }
 
 /* 參數選擇器樣式 */
-.param-checkbox:checked + span {
-    font-weight: 700;
+.parameter-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0;
 }
 
-.param-checkbox:checked ~ * {
-    background-color: #e7f3ff;
+.parameter-selector label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.parameter-selector label:hover {
+    border-color: var(--secondary-color);
+    background: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.param-checkbox {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--secondary-color);
+}
+
+.param-checkbox:checked + span {
+    font-weight: 700;
+    color: var(--primary-color);
 }
 
 label:has(.param-checkbox:checked) {
-    border-color: #0d6efd !important;
-    background-color: #e7f3ff !important;
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    border-color: var(--secondary-color);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
-label:hover {
-    border-color: #0d6efd !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* 實時數據樣式 */
+.realtime-data-container .data-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.data-item {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, white 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.data-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--secondary-color);
+}
+
+.data-item label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.data-item .value {
+    display: block;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
 }
 </style>
 
@@ -83,7 +186,7 @@ label:hover {
 
 <!-- 最新數據讀取 -->
 <div class="card realtime-data-container">
-    <h2>📡 最新數據讀取</h2>
+    <h2>最新數據讀取</h2>
     <div class="data-row">
         <div class="data-item temperature">
             <label>溫度</label>

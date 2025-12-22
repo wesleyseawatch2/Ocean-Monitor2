@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}測站列表 - 海洋監測系統{% endblock %}
+{% block title %}測站列表 - Ocean Monitor Web{% endblock %}
 
 {% block extra_head %}
 <!-- Leaflet CSS -->
@@ -17,35 +17,55 @@
 
     .station-card {
         background: white;
-        border-radius: 12px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
     }
 
     .station-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--secondary-color);
     }
 
     .station-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         color: white;
         padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .station-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
     }
 
     .station-header h3 {
         margin: 0 0 0.5rem 0;
-        font-size: 1.3rem;
+        font-size: 1.4rem;
+        font-weight: 700;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        position: relative;
+        z-index: 1;
     }
 
     .station-header p {
         margin: 0.25rem 0;
         font-size: 0.9rem;
         opacity: 0.95;
+        position: relative;
+        z-index: 1;
     }
 
     .station-map {
@@ -61,48 +81,77 @@
     .info-row {
         display: flex;
         justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #f0f0f0;
+        padding: 0.875rem 0;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s ease;
     }
 
     .info-row:last-child {
         border-bottom: none;
     }
 
+    .info-row:hover {
+        background: var(--bg-primary);
+        margin: 0 -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
     .info-label {
-        color: #666;
-        font-weight: 500;
+        color: var(--text-secondary);
+        font-weight: 600;
         font-size: 0.9rem;
     }
 
     .info-value {
-        color: #333;
-        font-weight: 600;
+        color: var(--text-primary);
+        font-weight: 700;
         text-align: right;
     }
 
     .station-actions {
-        padding: 1rem 1.5rem;
-        background: #f8f9fa;
+        padding: 1.25rem 1.5rem;
+        background: var(--bg-primary);
         display: flex;
         gap: 1rem;
     }
 
     .btn-detail {
         flex: 1;
-        padding: 0.75rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 0.875rem 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         color: white;
         text-decoration: none;
         text-align: center;
-        border-radius: 6px;
-        font-weight: 600;
+        border-radius: 10px;
+        font-weight: 700;
         transition: all 0.3s ease;
+        box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-detail::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-detail:hover::before {
+        width: 300px;
+        height: 300px;
     }
 
     .btn-detail:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(12, 74, 110, 0.3);
     }
 
     .no-location {
@@ -110,9 +159,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f5f5f5;
-        color: #999;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
         font-size: 0.95rem;
+        font-weight: 500;
     }
 
     .leaflet-popup-content-wrapper {
@@ -129,17 +179,17 @@
 
 {% block content %}
 <div class="card">
-    <h2>📍 測站列表</h2>
+    <h2>測站列表</h2>
 
     {% if not stations %}
-    <p style="text-align: center; color: #999; padding: 2rem;">尚無測站資料</p>
+    <p style="text-align: center; color: var(--text-secondary); padding: 3rem; font-size: 1.1rem;">尚無測站資料</p>
     {% else %}
     <div class="stations-grid">
         {% for station in stations %}
         <div class="station-card">
             <!-- 測站標題 -->
             <div class="station-header">
-                <h3>🌊 {{ station.station_name }}</h3>
+                <h3>{{ station.station_name }}</h3>
                 <p>設備型號：{{ station.device_model|default:"未設定" }}</p>
                 <p>裝設日期：{{ station.install_date|date:"Y年m月d日" }}</p>
             </div>
@@ -149,7 +199,7 @@
             <div class="station-map" id="map-{{ station.id }}"></div>
             {% else %}
             <div class="no-location">
-                📍 尚未設定 GPS 座標
+                尚未設定 GPS 座標
             </div>
             {% endif %}
 
@@ -219,11 +269,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 添加彈出視窗
         marker.bindPopup(`
-            <div style="min-width: 180px;">
-                <strong style="color: #667eea; font-size: 1.1rem;">{{ station.station_name }}</strong><br>
-                <small style="color: #666;">{{ station.location|default:"海上測站" }}</small>
-                <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-                <small>📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
+            <div style="min-width: 200px; padding: 0.5rem;">
+                <strong style="color: #0C4A6E; font-size: 1.1rem; font-weight: 700;">{{ station.station_name }}</strong><br>
+                <small style="color: #64748B; margin-top: 0.25rem; display: block;">{{ station.location|default:"海上測站" }}</small>
+                <hr style="margin: 10px 0; border: none; border-top: 1px solid #E2E8F0;">
+                <small style="color: #64748B; font-weight: 500;">座標: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
             </div>
         `);
     })();
