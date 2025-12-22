@@ -8,7 +8,7 @@ const homeTourSteps = [
     {
         element: 'nav',
         popover: {
-            title: '歡迎使用海洋監測系統 🌊',
+            title: '歡迎使用Ocean Monitor Web',
             description: '這是系統的主選單，您可以在這裡切換不同的功能頁面。',
             side: "bottom",
             align: 'start'

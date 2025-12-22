@@ -224,7 +224,7 @@ label:has(.param-checkbox:checked) {
         </div>
     </div>
     <p style="text-align:center; color:#999; font-size:12px; margin-top:15px;">
-        最後更新: <span id="latest-timestamp">{{ readings.0.timestamp|date:"Y-m-d H:i:s"|default:"--" }}</span>
+        最後更新: <span id="latest-timestamp" data-timestamp="{{ readings.0.timestamp.isoformat|default:"" }}">--</span>
     </p>
 </div>
 
@@ -409,7 +409,7 @@ label:has(.param-checkbox:checked) {
                 <tbody id="latest-readings-tbody">
                     {% for reading in latest_readings %}
                     <tr>
-                        <td style="white-space: nowrap;">{{ reading.timestamp }}</td>
+                        <td style="white-space: nowrap;" class="timestamp-cell" data-timestamp="{{ reading.timestamp.isoformat }}">{{ reading.timestamp }}</td>
                         <td style="white-space: nowrap;">{{ reading.temperature|floatformat:2|default:"--" }}</td>
                         <td style="white-space: nowrap;">{{ reading.ph|floatformat:2|default:"--" }}</td>
                         <td style="white-space: nowrap;">{{ reading.oxygen|floatformat:2|default:"--" }}</td>
@@ -933,6 +933,59 @@ document.querySelectorAll('.param-checkbox').forEach(checkbox => {
 
 // 初始化圖表 - 顯示默認選中的參數
 updateChart();
+
+// 初始化時間戳顯示 - 轉換為台灣時間
+document.addEventListener('DOMContentLoaded', function() {
+    // 格式化單個時間戳的輔助函數
+    function formatToTaiwanTime(isoString) {
+        try {
+            const date = new Date(isoString);
+            if (!isNaN(date.getTime())) {
+                const taiwanTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+                const year = taiwanTime.getUTCFullYear();
+                const month = String(taiwanTime.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(taiwanTime.getUTCDate()).padStart(2, '0');
+                const hours = String(taiwanTime.getUTCHours()).padStart(2, '0');
+                const minutes = String(taiwanTime.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(taiwanTime.getUTCSeconds()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
+        } catch (error) {
+            console.error('[時間格式化] 錯誤:', error);
+        }
+        return isoString;
+    }
+
+    // 格式化最新數據的時間戳
+    const timestampElement = document.getElementById('latest-timestamp');
+    if (timestampElement) {
+        const isoTimestamp = timestampElement.getAttribute('data-timestamp');
+        if (isoTimestamp) {
+            // 使用 realtime.js 中的 formatTimestamp 函數
+            // 如果函數存在，使用它；否則使用本地格式化
+            if (typeof formatTimestamp === 'function') {
+                timestampElement.textContent = formatTimestamp(isoTimestamp);
+            } else {
+                timestampElement.textContent = formatToTaiwanTime(isoTimestamp);
+            }
+        }
+    }
+
+    // 格式化表格中所有的時間戳
+    const timestampCells = document.querySelectorAll('.timestamp-cell');
+    timestampCells.forEach(cell => {
+        const isoTimestamp = cell.getAttribute('data-timestamp');
+        if (isoTimestamp) {
+            if (typeof formatTimestamp === 'function') {
+                cell.textContent = formatTimestamp(isoTimestamp);
+            } else {
+                cell.textContent = formatToTaiwanTime(isoTimestamp);
+            }
+        }
+    });
+
+    console.log('[時間格式化] 已格式化 ' + (timestampCells.length + 1) + ' 個時間戳為台灣時間');
+});
 
 // 時間範圍切換函數 - 使用 AJAX 不重新載入頁面
 function changeTimeRange(range) {

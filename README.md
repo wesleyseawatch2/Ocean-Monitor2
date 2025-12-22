@@ -1,4 +1,4 @@
-# 🌊 海洋監測系統 Ocean Monitor
+# Ocean Monitor Web
 
 基於 Django MTV 架構的海洋數據監測與可視化系統。
 
