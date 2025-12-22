@@ -103,6 +103,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# 靜態文件來源目錄
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 # WhiteNoise 靜態檔案配置 (Django 4.2+ 使用 STORAGES)
 # 使用 CompressedStaticFilesStorage（不使用 Manifest，避免部署問題）
 STORAGES = {

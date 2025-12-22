@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Ocean Monitor Web{% endblock %}</title>
+    <title>{% block title %}Real Time Ocean Monitor{% endblock %}</title>
 
     <!-- Favicon -->
     {% load static %}
@@ -576,8 +576,8 @@
         <div class="nav-container">
             <div class="nav-left">
                 <a href="{% url 'station_data:station_list' %}" class="logo-container">
-                    <img src="{% static 'images/logo.png' %}" alt="Ocean Monitor Logo">
-                    <h1>Ocean Monitor Web</h1>
+                    <img src="{% static 'images/logo.png' %}" alt="Real Time Ocean Monitor Logo">
+                    <h1>Real Time Ocean Monitor</h1>
                 </a>
                 <div class="nav-links">
                     <a href="{% url 'station_data:station_list' %}">測站列表</a>
