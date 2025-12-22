@@ -583,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             existingBadge.remove();
                         }
 
-                        // 創建新資料提示框
+                        // 創建新資料提示框（黃色）
                         const badge = document.createElement('div');
                         badge.className = 'new-data-badge';
                         badge.textContent = '新資料';
@@ -591,13 +591,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             position: absolute;
                             top: -8px;
                             right: -8px;
-                            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-                            color: white;
+                            background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%);
+                            color: #333;
                             padding: 4px 12px;
                             border-radius: 12px;
                             font-size: 11px;
                             font-weight: 700;
-                            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+                            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.5);
                             animation: badge-appear 0.3s ease, badge-pulse 2s ease-in-out infinite;
                             z-index: 10;
                             letter-spacing: 0.5px;
@@ -607,10 +607,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         parentCard.style.position = 'relative';
                         parentCard.appendChild(badge);
 
-                        // 添加輕微的卡片強調效果
+                        // 添加輕微的卡片強調效果（黃色）
                         parentCard.style.transition = 'all 0.3s ease';
-                        parentCard.style.borderColor = '#ff6b6b';
-                        parentCard.style.boxShadow = '0 4px 12px rgba(255, 107, 107, 0.2)';
+                        parentCard.style.borderColor = '#ffc107';
+                        parentCard.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.3)';
 
                         // 3 秒後淡出並移除提示框
                         setTimeout(() => {
