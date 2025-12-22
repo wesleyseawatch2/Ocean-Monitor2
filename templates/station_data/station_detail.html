@@ -574,18 +574,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (oldValue !== newValue) {
                     currentElement.textContent = newValue;
 
-                    // 添加閃爍效果
-                    const parentCard = currentElement.closest('.data-item') || currentElement;
-                    parentCard.style.backgroundColor = '#ffd54f';
-                    parentCard.style.transform = 'scale(1.05)';
-                    parentCard.style.transition = 'all 0.3s ease';
-                    parentCard.style.boxShadow = '0 4px 12px rgba(255, 213, 79, 0.6)';
+                    // 獲取父元素（.data-item）
+                    const parentCard = currentElement.closest('.data-item');
+                    if (parentCard) {
+                        // 移除舊的提示框（如果存在）
+                        const existingBadge = parentCard.querySelector('.new-data-badge');
+                        if (existingBadge) {
+                            existingBadge.remove();
+                        }
 
-                    setTimeout(() => {
-                        parentCard.style.backgroundColor = '';
-                        parentCard.style.transform = 'scale(1)';
-                        parentCard.style.boxShadow = '';
-                    }, 1500);
+                        // 創建新資料提示框
+                        const badge = document.createElement('div');
+                        badge.className = 'new-data-badge';
+                        badge.textContent = '新資料';
+                        badge.style.cssText = `
+                            position: absolute;
+                            top: -8px;
+                            right: -8px;
+                            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+                            color: white;
+                            padding: 4px 12px;
+                            border-radius: 12px;
+                            font-size: 11px;
+                            font-weight: 700;
+                            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+                            animation: badge-appear 0.3s ease, badge-pulse 2s ease-in-out infinite;
+                            z-index: 10;
+                            letter-spacing: 0.5px;
+                        `;
+
+                        // 確保父元素有相對定位
+                        parentCard.style.position = 'relative';
+                        parentCard.appendChild(badge);
+
+                        // 添加輕微的卡片強調效果
+                        parentCard.style.transition = 'all 0.3s ease';
+                        parentCard.style.borderColor = '#ff6b6b';
+                        parentCard.style.boxShadow = '0 4px 12px rgba(255, 107, 107, 0.2)';
+
+                        // 3 秒後淡出並移除提示框
+                        setTimeout(() => {
+                            badge.style.animation = 'badge-fade-out 0.5s ease';
+                            setTimeout(() => {
+                                badge.remove();
+                                parentCard.style.borderColor = '';
+                                parentCard.style.boxShadow = '';
+                            }, 500);
+                        }, 3000);
+                    }
 
                     console.log(`[刷新] 已更新 ${elementId}: ${oldValue} → ${newValue}`);
                 }

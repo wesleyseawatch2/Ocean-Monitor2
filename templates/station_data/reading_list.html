@@ -92,7 +92,7 @@
                         <th style="white-space: nowrap;">濁度 (NTU)</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="readings-tbody">
                     {% for reading in readings %}
                     <tr>
                         <td style="white-space: nowrap;"><a href="{% url 'station_data:station_detail' reading.station.id %}">{{ reading.station.station_name }}</a></td>
@@ -184,6 +184,68 @@ document.addEventListener('DOMContentLoaded', function() {
             container.scrollLeft = scrollLeftStart - walk;
         });
     }
+
+    // ==========================================
+    // 定期刷新數據記錄列表 (每 30 秒)
+    // ==========================================
+    function refreshReadingsList() {
+        const tbody = document.getElementById('readings-tbody');
+        if (!tbody) {
+            console.warn('[刷新] 找不到 readings-tbody 元素');
+            return;
+        }
+
+        fetch('/stations/readings/')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTbody = doc.getElementById('readings-tbody');
+
+                if (!newTbody) {
+                    console.warn('[刷新] 無法從新頁面找到 tbody');
+                    return;
+                }
+
+                // 檢查是否有新數據（比較第一行）
+                const oldFirstRow = tbody.querySelector('tr:first-child');
+                const newFirstRow = newTbody.querySelector('tr:first-child');
+
+                let hasNewData = false;
+                if (oldFirstRow && newFirstRow) {
+                    const oldText = oldFirstRow.textContent.trim();
+                    const newText = newFirstRow.textContent.trim();
+                    hasNewData = (oldText !== newText);
+                }
+
+                // 更新表格內容
+                tbody.innerHTML = newTbody.innerHTML;
+
+                // 如果有新數據，添加黃色閃爍效果
+                if (hasNewData) {
+                    const rows = tbody.querySelectorAll('tr');
+                    rows.forEach((row, index) => {
+                        if (index < 3) {  // 只閃爍前 3 筆
+                            row.style.transition = 'background-color 0.3s ease';
+                            row.style.backgroundColor = '#ffd54f';
+                            setTimeout(() => {
+                                row.style.backgroundColor = '';
+                            }, 1500);
+                        }
+                    });
+                    console.log('[刷新] 數據記錄列表已更新 (有新數據)');
+                } else {
+                    console.log('[刷新] 數據記錄列表已檢查 (無新數據)');
+                }
+            })
+            .catch(error => {
+                console.error('[刷新] 更新失敗:', error);
+            });
+    }
+
+    // 啟動定期刷新（每 30 秒）
+    setInterval(refreshReadingsList, 30000);
+    console.log('[刷新] 數據記錄列表定期刷新已啟動（每 30 秒）');
 });
 
 // ==========================================
