@@ -510,9 +510,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newTbody = doc.getElementById('latest-readings-tbody');
 
                 if (newTbody) {
+                    // 檢查是否有新數據
+                    const oldFirstRow = tbody.querySelector('tr:first-child');
+                    const newFirstRow = newTbody.querySelector('tr:first-child');
+
+                    const hasNewData = !oldFirstRow ||
+                        (oldFirstRow && newFirstRow && oldFirstRow.innerHTML !== newFirstRow.innerHTML);
+
                     // 更新表格內容
                     tbody.innerHTML = newTbody.innerHTML;
-                    console.log('[刷新] 最新數據記錄已更新');
+
+                    if (hasNewData) {
+                        // 為新數據添加黃色閃爍效果
+                        const newRows = tbody.querySelectorAll('tr');
+                        newRows.forEach((row, index) => {
+                            if (index < 3) { // 只高亮前 3 筆新數據
+                                row.style.backgroundColor = '#ffd54f';
+                                row.style.transition = 'background-color 1.5s ease';
+                                setTimeout(() => {
+                                    row.style.backgroundColor = '';
+                                }, 1500);
+                            }
+                        });
+                        console.log('[刷新] 最新數據記錄已更新 (有新數據)');
+                    } else {
+                        console.log('[刷新] 最新數據記錄已檢查 (無新數據)');
+                    }
                 }
             })
             .catch(error => {
